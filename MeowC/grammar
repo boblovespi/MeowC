@@ -1,0 +1,27 @@
+﻿file -> definition* EOF ;
+
+definition -> KEYWORD[let] IDENTIFIER TYPEDEF type DEF expression SEMICOLON ;
+
+type -> IDENTIFIER 
+      | builtin 
+      | type TYPECON type ;
+
+builtin -> "i32" ;
+
+expression -> constant | function | procedure | cases ;
+
+constant -> NUMBER | CHAR ;
+
+function -> IDENTIFIER MAPSTO expression ;
+
+procedure -> LBRACK RBRACK LBRACE statement* RBRACE ;
+
+statement -> evaluation SEMICOLON ;
+
+evaluation -> IDENTIFIER ( evaluation | constant ) ;
+
+cases -> LBRACE case* finalcase RBRACE ;
+
+case -> expression SEMICOLON KEYWORD[let] evaluation COMMA ;
+
+finalcase -> expression SEMICOLON KEYWORD[otherwise] PERIOD ;

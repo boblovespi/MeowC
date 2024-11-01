@@ -1,0 +1,20 @@
+﻿/* let fib: i32 -> i32 := n |-> {
+    0; if n = 0,
+    n * fib(n - 1); otherwise.
+};
+
+// test
+
+let main := []
+{
+    print 'm';
+    print 'e';
+    print 'o';
+    print 'w';
+    print '\n';
+    print fib 5;
+};
+*/
+let num: i32 := 123;
+let joe: i64 := 124444;
+let foobar: i8 := 9;
