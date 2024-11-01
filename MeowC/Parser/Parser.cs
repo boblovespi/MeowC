@@ -1,4 +1,5 @@
-﻿using MeowC.Parser.Rules;
+﻿using MeowC.Parser.Matches;
+using MeowC.Parser.Rules;
 
 namespace MeowC.Parser;
 
@@ -18,10 +19,14 @@ public class Parser(List<Token> tokens)
 
 	internal Expression ParseExpression()
 	{
-		// TODO: replace with pratt parser
-		var num = Peek.Data;
-		Consume(TokenTypes.Number);
-		return new Expression();
+		var token = Peek;
+		if (Rules.Rules.Prefixes.TryGetValue(token.Type, out var rule))
+		{
+			Consume(token.Type);
+			return rule.Parse(this, token);
+		}
+		throw new ParseException(token);
+
 	}
 
 	internal string Identifier()

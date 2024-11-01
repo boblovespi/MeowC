@@ -17,4 +17,4 @@ let main := []
 */
 let num: i32 := 123;
 let joe: i64 := 124444;
-let foobar: i8 := 9;
+let foobar: i8 := joe;

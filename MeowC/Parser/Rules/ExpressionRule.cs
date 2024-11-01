@@ -1,6 +1,6 @@
 ﻿namespace MeowC.Parser.Rules;
 
-public interface ExpressionRule
+public abstract class ExpressionRule
 {
 	
 }

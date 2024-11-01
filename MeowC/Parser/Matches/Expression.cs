@@ -1,6 +1,8 @@
-﻿namespace MeowC.Parser.Rules;
+﻿namespace MeowC.Parser.Matches;
 
-public class Expression
+public record Expression
 {
-	
+	public record Identifier(string Name) : Expression;
+
+	public record Number(long Value) : Expression;
 }

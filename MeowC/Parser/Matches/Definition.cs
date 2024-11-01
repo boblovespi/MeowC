@@ -1,4 +1,6 @@
-﻿namespace MeowC.Parser.Rules;
+﻿using MeowC.Parser.Matches;
+
+namespace MeowC.Parser.Rules;
 
 public class Definition(string id, string type, Expression val)
 {
