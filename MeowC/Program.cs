@@ -1,4 +1,6 @@
-﻿namespace MeowC;
+﻿using MeowC.Generators;
+
+namespace MeowC;
 
 public static class Program
 {
@@ -39,6 +41,9 @@ public static class Program
 			// Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
 			var interpreter = new Interpreter.Interpreter(parser.Definitions);
 			interpreter.Run();
+			var outputter = new AMD64Gen(parser.Definitions);
+			using (var writer = new StreamWriter("./test.s"))
+				writer.Write(outputter.Output());
 		}
 	}
 
