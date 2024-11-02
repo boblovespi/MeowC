@@ -30,6 +30,7 @@ public static class TokenTypes
 	public static readonly TokenType Minus = MakeToken("MINUS");
 	public static readonly TokenType Plus = MakeToken("PLUS");
 	public static readonly TokenType Times = MakeToken("TIMES");
+	public static readonly TokenType Slash = MakeToken("SLASH");
 	public new static readonly TokenType Equals = MakeToken("EQUALS");
 	public static readonly TokenType EndOfFile = MakeToken("EOF");
 

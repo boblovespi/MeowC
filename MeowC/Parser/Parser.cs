@@ -16,7 +16,7 @@ public class Parser(List<Token> tokens)
 	}
 
 	internal Definition ParseDefinition() => Rules.Rules.Definition.Parse(this);
-	
+
 	internal Statement ParseStatement() => Rules.Rules.Statement.Parse(this);
 
 	internal Expression ParseExpression(Priorities priority)
@@ -27,13 +27,39 @@ public class Parser(List<Token> tokens)
 		var left = prefixRule.Parse(this, token);
 		// Console.WriteLine($"infix peek: {Peek}");
 		token = Peek;
-		while (Rules.Rules.Infixes.TryGetValue(token.Type, out var infixRule) && priority < ExprPriority)
+		while (HasRule(priority, token, out var infixRule, out var applicationRule))
 		{
-			Consume(token.Type);
-			left = infixRule.Parse(this, left, token);
+			if (infixRule != null)
+			{
+				Consume(token.Type);
+				left = infixRule.Parse(this, left, token);
+			}
+			else left = applicationRule!.Parse(this, left);
+			token = Peek;
 		}
 
 		return left;
+	}
+
+	private bool HasRule(Priorities priority, Token token, out InfixExpressionRule? infixRule,
+		out ApplicationExpressionRule? applicationRule)
+	{
+		applicationRule = null;
+		var hasRealInfixRule = Rules.Rules.Infixes.TryGetValue(token.Type, out infixRule);
+		if (hasRealInfixRule) return priority < infixRule!.Priority;
+		infixRule = null;
+		applicationRule = Rules.Rules.ApplicationExpression;
+		return priority < applicationRule.Priority && Rules.Rules.Prefixes.ContainsKey(token.Type);
+	}
+
+	internal Case ParseCase()
+	{
+		var left = ParseExpression(Priorities.No);
+		Consume(TokenTypes.Semicolon);
+		var token = Peek;
+		Consume(TokenTypes.Keyword);
+		if (!Rules.Rules.CaseRules.TryGetValue(token.Data, out var rule)) throw new ParseException(token);
+		return rule.Parse(this, left, token);
 	}
 
 	public Priorities ExprPriority => Rules.Rules.Infixes.TryGetValue(Peek.Type, out var rule) ? rule.Priority : Priorities.No;

@@ -14,4 +14,11 @@ public abstract record Expression
 	{
 		public override string ToString() => $"Procedure: \n{string.Join('\n', Statements)}";
 	}
+
+	public record Case(List<Matches.Case> Cases) : Expression
+	{
+		public override string ToString() => $"Cases: \n{string.Join('\n', Cases)}";
+	}
+
+	public record Application(Expression Function, Expression Argument) : Expression;
 }

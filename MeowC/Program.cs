@@ -37,13 +37,13 @@ public static class Program
 			// foreach (var token in lexer.Tokens) Console.WriteLine(token);
 			var parser = new Parser.Parser(lexer.Tokens);
 			parser.Parse();
-			// foreach (var def in parser.Definitions)
-			// Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
+			foreach (var def in parser.Definitions)
+				Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
 			var interpreter = new Interpreter.Interpreter(parser.Definitions);
 			interpreter.Run();
-			var outputter = new AMD64Gen(parser.Definitions);
-			using (var writer = new StreamWriter("./test.s"))
-				writer.Write(outputter.Output());
+			// var outputter = new AMD64Gen(parser.Definitions);
+			// using (var writer = new StreamWriter("./test.s"))
+			// 	writer.Write(outputter.Output());
 		}
 	}
 

@@ -10,6 +10,7 @@ public enum Priorities
 	Product,
 	Exponent,
 	Prefix,
+	Application,
 	Postfix,
 	Const
 }
