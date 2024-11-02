@@ -4,17 +4,18 @@
 };
 
 // test
-
-let main := []
+*/
+let main: proc := []
 {
     print 'm';
     print 'e';
     print 'o';
     print 'w';
     print '\n';
-    print fib 5;
+    print fib;
 };
-*/
+/*
 let num: i32 := 1 - 1 - 1;
 let id: i32toi32 := x |-> x + 1;
 let m: i8 := 'm';
+*/
