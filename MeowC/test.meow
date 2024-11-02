@@ -12,7 +12,7 @@ let main: proc := []
     print 'o';
     print 'w';
     print '\n';
-    print fib 5;
+    print fib 7;
 };
 /*
 let num: i32 := 1 - 1 - 1;

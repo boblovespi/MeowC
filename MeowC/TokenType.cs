@@ -1,9 +1,7 @@
 ﻿namespace MeowC;
 
-public class TokenType(string name)
+public record TokenType(string Name)
 {
-	public string Name { get; } = name;
-
 	public override string ToString()
 	{
 		return Name;
