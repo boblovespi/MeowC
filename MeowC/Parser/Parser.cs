@@ -17,17 +17,24 @@ public class Parser(List<Token> tokens)
 
 	internal Definition ParseDefinition() => Rules.Rules.Definition.Parse(this);
 
-	internal Expression ParseExpression()
+	internal Expression ParseExpression(Priorities priority)
 	{
 		var token = Peek;
-		if (Rules.Rules.Prefixes.TryGetValue(token.Type, out var rule))
+		if (!Rules.Rules.Prefixes.TryGetValue(token.Type, out var prefixRule)) throw new ParseException(token);
+		Consume(token.Type);
+		var left = prefixRule.Parse(this, token);
+		// Console.WriteLine($"infix peek: {Peek}");
+		token = Peek;
+		while (Rules.Rules.Infixes.TryGetValue(token.Type, out var infixRule) && priority < ExprPriority)
 		{
 			Consume(token.Type);
-			return rule.Parse(this, token);
+			left = infixRule.Parse(this, left, token);
 		}
-		throw new ParseException(token);
 
+		return left;
 	}
+
+	public Priorities ExprPriority => Rules.Rules.Infixes.TryGetValue(Peek.Type, out var rule) ? rule.Priority : Priorities.No;
 
 	internal string Identifier()
 	{
@@ -45,6 +52,6 @@ public class Parser(List<Token> tokens)
 		if (Peek.Type != expected || (data != "" && Peek.Data != data))
 			throw new WrongTokenException(expected, Peek.Type);
 		// Program.Error(Peek.Line, Peek.Col, $"Expected {expected}, but got {Peek.Data}");
-		this.CurrentIndex++;
+		CurrentIndex++;
 	}
 }

@@ -1,4 +1,6 @@
-﻿namespace MeowC.Parser.Rules;
+﻿using MeowC.Parser.Matches;
+
+namespace MeowC.Parser.Rules;
 
 public class DefinitionRule
 {
@@ -9,7 +11,7 @@ public class DefinitionRule
 		parser.Consume(TokenTypes.TypeDef);
 		var type = parser.Identifier();
 		parser.Consume(TokenTypes.Def);
-		var val = parser.ParseExpression();
+		var val = parser.ParseExpression(Priorities.No);
 		parser.Consume(TokenTypes.Semicolon);
 		return new Definition(id, type, val);
 	}

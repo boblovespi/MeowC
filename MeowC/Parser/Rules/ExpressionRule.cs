@@ -2,5 +2,5 @@
 
 public abstract class ExpressionRule
 {
-	
+	public abstract Priorities Priority { get; }
 }

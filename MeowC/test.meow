@@ -15,6 +15,6 @@ let main := []
     print fib 5;
 };
 */
-let num: i32 := 123;
-let joe: i64 := 124444;
-let foobar: i8 := joe;
+let num: i32 := 1 - 1 - 1;
+let id: i32toi32 := x |-> x + 1;
+let m: i8 := 'm';
