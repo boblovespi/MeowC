@@ -3,7 +3,7 @@
 public static class Program
 {
 	public static Dictionary<string, TokenType> TokenMap { get; } = new();
-	public static ISet<string> Keywords { get; } = new HashSet<string>(); 
+	public static ISet<string> Keywords { get; } = new HashSet<string>();
 
 	public static void Main(string[] args)
 	{
@@ -17,6 +17,7 @@ public static class Program
 				for (var i = 1; i < line.Length; i++) TokenMap[line[i]] = token;
 			}
 		}
+
 		using (var reader = new StreamReader("keyworddef"))
 		{
 			while (!reader.EndOfStream)
@@ -31,16 +32,14 @@ public static class Program
 			var lines = reader.ReadToEnd();
 			var lexer = new Lexer(lines);
 			lexer.Parse();
-			foreach (var token in lexer.Tokens) Console.WriteLine(token);
+			// foreach (var token in lexer.Tokens) Console.WriteLine(token);
 			var parser = new Parser.Parser(lexer.Tokens);
 			parser.Parse();
-			foreach (var def in parser.Definitions)
-			{
-				Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
-			}
+			// foreach (var def in parser.Definitions)
+			// Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
+			var interpreter = new Interpreter.Interpreter(parser.Definitions);
+			interpreter.Run();
 		}
-
-		Console.WriteLine("Hello, World!");
 	}
 
 	public static void Error(int line, int column, string message)

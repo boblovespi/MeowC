@@ -7,10 +7,10 @@ public class StatementRule
 	public Statement Parse(Parser parser)
 	{
 		var peek = parser.Peek;
-		var procedure = peek.Data;
+		var routine = peek.Data;
 		parser.Consume(peek.Type);
 		var expression = parser.ParseExpression(Priorities.No);
 		parser.Consume(TokenTypes.Semicolon);
-		return new Statement.Callable(procedure, expression);
+		return new Statement.Callable(routine, expression);
 	}
 }
