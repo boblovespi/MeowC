@@ -1,5 +1,5 @@
 ﻿TYPEDEF :
-TYPECON ->
+FUNCTYPE ->
 DEF :=
 MAPSTO |->
 LBRACK [

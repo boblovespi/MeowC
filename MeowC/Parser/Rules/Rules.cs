@@ -9,6 +9,7 @@ public static class Rules
 	public static readonly IdentifierExpressionRule IdentifierExpression = new();
 	public static readonly NumberExpressionRule NumberExpression = new();
 	public static readonly CharExpressionRule CharExpression = new();
+	public static readonly StringExpressionRule StringExpression = new();
 	public static readonly PrefixOperatorExpressionRule PrefixOperatorExpression = new(Priorities.Prefix);
 	public static readonly ParensExpressionRule ParensExpression = new();
 	public static readonly ProcedureExpressionRule ProcedureExpression = new();
@@ -30,6 +31,7 @@ public static class Rules
 		{ TokenTypes.Identifier, IdentifierExpression },
 		{ TokenTypes.Number, NumberExpression },
 		{ TokenTypes.Char, CharExpression },
+		{ TokenTypes.String, StringExpression },
 		{ TokenTypes.Minus, PrefixOperatorExpression },
 		{ TokenTypes.LParen, ParensExpression },
 		{ TokenTypes.LBrack, ProcedureExpression },

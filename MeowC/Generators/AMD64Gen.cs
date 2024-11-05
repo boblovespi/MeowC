@@ -15,17 +15,17 @@ public class AMD64Gen(List<Definition> definitions)
 		EmitLine(".text");
 		EmitLine(".globl main");
 		foreach (var definition in Definitions)
-			if (definition is { Id: "main", Val: Expression.Procedure procedure }) OutputProcedure(procedure, Buffer);
+			if (definition is { Id: "main", Val: Expression.Procedure procedure }) OutputProcedure(procedure, "main");
 		return Buffer.ToString();
 	}
 
-	private void OutputProcedure(Expression.Procedure procedure, StringBuilder buffer)
+	private void OutputProcedure(Expression.Procedure procedure, string name)
 	{
-		EmitLabel("main");
+		EmitLabel(name);
 		EmitInstruction("push %rbp");
 		EmitInstruction("movq %rsp, %rbp");
 		EmitBlank();
-		foreach (var statement in procedure.Statements) OutputStatement(statement, buffer);
+		foreach (var statement in procedure.Statements) OutputStatement(statement);
 		EmitBlank();
 		EmitInstruction("movq $0, %rax");
 		EmitInstruction("movq %rbp, %rsp");
@@ -33,7 +33,7 @@ public class AMD64Gen(List<Definition> definitions)
 		EmitInstruction("ret");
 	}
 
-	private void OutputStatement(Statement statement, StringBuilder buffer)
+	private void OutputStatement(Statement statement)
 	{
 		switch (statement)
 		{

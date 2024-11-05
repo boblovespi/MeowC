@@ -43,6 +43,8 @@ public class Lexer(string lines)
 				EatNumber();
 			else if (Peek == '\'')
 				EatChar();
+			else if (Peek == '"')
+				EatString();
 			else if (char.IsLetter(Peek))
 				EatLiteral();
 			else
@@ -78,6 +80,21 @@ public class Lexer(string lines)
 		}
 
 		Tokens.Add(new Token(TokenTypes.Char, Lines.Substring(start, Current - start), LineNum, ColNum));
+		Advance();
+	}
+
+	private void EatString()
+	{
+		Advance();
+		var start = Current;
+		while (Peek != '"' && NotEOF) Advance();
+		if (EndOfFile)
+		{
+			Program.Error(LineNum, ColNum, $"Unexpected end of string '{Lines.Substring(start, Current - start)}'.");
+			return;
+		}
+
+		Tokens.Add(new Token(TokenTypes.String, Lines.Substring(start, Current - start), LineNum, ColNum));
 		Advance();
 	}
 

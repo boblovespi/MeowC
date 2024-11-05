@@ -56,6 +56,7 @@ public class Interpreter(List<Definition> definitions)
 		expression switch
 		{
 			Expression.Number number => number.Value,
+			Expression.String @string => @string.Value,
 			Expression.Identifier id => new IdValue(id.Name),
 			Expression.Application app => Apply(app, bindings),
 			Expression.BinaryOperator binOp => BinOp(binOp, bindings),

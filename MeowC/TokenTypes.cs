@@ -12,10 +12,11 @@ public static class TokenTypes
 	public static readonly TokenType Type = MakeToken("TYPE");
 	public static readonly TokenType Number = MakeToken("NUMBER");
 	public static readonly TokenType Char = MakeToken("CHAR");
+	public static readonly TokenType String = MakeToken("STRING");
 
 	// symbols
 	public static readonly TokenType TypeDef = MakeToken("TYPEDEF");
-	public static readonly TokenType TypeCon = MakeToken("TYPECON");
+	public static readonly TokenType FuncType = MakeToken("FUNCTYPE");
 	public static readonly TokenType Def = MakeToken("DEF");
 	public static readonly TokenType MapsTo = MakeToken("MAPSTO");
 	public static readonly TokenType LBrack = MakeToken("LBRACK");
