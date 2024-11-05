@@ -1,6 +1,6 @@
-﻿let fib: i32toi32 := n |-> {
+﻿let fac: i32toi32 := n |-> {
     1; if n = 0,
-    n * fib(n - 1); otherwise.
+    n * fac(n - 1); otherwise.
 };
 /*
 // test
