@@ -10,4 +10,6 @@ public readonly struct Token(TokenType type, string data, int line, int col)
 	public int Col { get; } = col;
 
 	public override string ToString() => Data.Length == 0 ? Type.ToString() : $"{Type}[{Data}]";
+
+	public string ErrorString => $"Token {ToString()} at {Line}:{Col}";
 }

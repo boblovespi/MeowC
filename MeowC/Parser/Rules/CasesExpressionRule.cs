@@ -11,6 +11,6 @@ public class CasesExpressionRule : PrefixExpressionRule
 		var cases = new List<Case>();
 		while (parser.Peek.Type != TokenTypes.RBrace) cases.Add(parser.ParseCase());
 		parser.Consume(TokenTypes.RBrace);
-		return new Expression.Case(cases);
+		return new Expression.Case(token, cases);
 	}
 }

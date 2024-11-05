@@ -1,4 +1,4 @@
-﻿let fac: i32toi32 := n |-> {
+﻿let fac: i32 -> i32 := n |-> {
     1; if n = 0,
     n * fac(n - 1); otherwise.
 };
@@ -15,4 +15,5 @@ let num: i32 := 1 - 1 - 1;
 let id: i32toi32 := x |-> x + 1;
 let m: i8 := 'm';
 */
-let foo: bar := (A + B)(u + v);
+// let foo: bar := (A + B)(u + v);
+// let curry: a -> a -> a := a;

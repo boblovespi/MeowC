@@ -9,7 +9,7 @@ public class DefinitionRule
 		parser.Consume(TokenTypes.Keyword, "let");
 		var id = parser.Identifier();
 		parser.Consume(TokenTypes.TypeDef);
-		var type = parser.Identifier();
+		var type = parser.ParseExpression(Priorities.No);
 		parser.Consume(TokenTypes.Def);
 		var val = parser.ParseExpression(Priorities.No);
 		parser.Consume(TokenTypes.Semicolon);

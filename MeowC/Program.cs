@@ -1,4 +1,5 @@
 ﻿using MeowC.Generators;
+using MeowC.Interpreter;
 
 namespace MeowC;
 
@@ -39,6 +40,8 @@ public static class Program
 			parser.Parse();
 			foreach (var def in parser.Definitions)
 				Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
+			var typer = new TypeChecker(parser.Definitions);
+			typer.Check();
 			var interpreter = new Interpreter.Interpreter(parser.Definitions);
 			interpreter.Run();
 			// var outputter = new AMD64Gen(parser.Definitions);

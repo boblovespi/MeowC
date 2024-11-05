@@ -1,26 +1,26 @@
 ﻿namespace MeowC.Parser.Matches;
 
-public abstract record Expression
+public abstract record Expression(Token Token)
 {
-	public record Identifier(string Name) : Expression;
+	public record Identifier(Token Token, string Name) : Expression(Token);
 
-	public record Number(long Value) : Expression;
+	public record Number(Token Token, long Value) : Expression(Token);
 
-	public record String(string Value) : Expression;
+	public record String(Token Token, string Value) : Expression(Token);
 
-	public record Prefix(TokenType Type, Expression Expression) : Expression;
+	public record Prefix(Token Token, TokenType Type, Expression Expression) : Expression(Token);
 
-	public record BinaryOperator(TokenType Type, Expression Left, Expression Right) : Expression;
+	public record BinaryOperator(Token Token, TokenType Type, Expression Left, Expression Right) : Expression(Token);
 
-	public record Procedure(List<Statement> Statements) : Expression
+	public record Procedure(Token Token, List<Statement> Statements) : Expression(Token)
 	{
 		public override string ToString() => $"Procedure: \n{string.Join('\n', Statements)}";
 	}
 
-	public record Case(List<Matches.Case> Cases) : Expression
+	public record Case(Token Token, List<Matches.Case> Cases) : Expression(Token)
 	{
 		public override string ToString() => $"Cases: \n{string.Join('\n', Cases)}";
 	}
 
-	public record Application(Expression Function, Expression Argument) : Expression;
+	public record Application(Token Token, Expression Function, Expression Argument) : Expression(Token);
 }

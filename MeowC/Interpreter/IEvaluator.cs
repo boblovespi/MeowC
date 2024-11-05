@@ -4,10 +4,10 @@ namespace MeowC.Interpreter;
 
 public interface IEvaluator<T>
 {
-	internal T Evaluate(Expression expression, Dictionary<IdValue, object> bindings);
-	internal T Cases(Expression.Case cases, Dictionary<IdValue, T> bindings);
-	internal T BinOp(Expression.BinaryOperator binaryOperator, Dictionary<IdValue, T> bindings);
-	internal T Apply(Expression.Application expression, Dictionary<IdValue, T> bindings);
+	internal T Evaluate(Expression expression, Dictionary<IdValue, T> bindings, T? hint = default);
+	internal T Cases(Expression.Case cases, Dictionary<IdValue, T> bindings, T? hint = default);
+	internal T BinOp(Expression.BinaryOperator binOp, Dictionary<IdValue, T> bindings, T? hint = default);
+	internal T Apply(Expression.Application app, Dictionary<IdValue, T> bindings, T? hint = default);
 
 	internal T Unbind(object maybe, Dictionary<IdValue, T> bindings)
 	{

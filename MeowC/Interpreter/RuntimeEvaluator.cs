@@ -7,7 +7,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 	private List<Definition> Definitions { get; } = definitions;
 	private IEvaluator<object> Me => this;
 
-	public object Evaluate(Expression expression, Dictionary<IdValue, object> bindings) =>
+	public object Evaluate(Expression expression, Dictionary<IdValue, object> bindings, object? hint = null) =>
 		expression switch
 		{
 			Expression.Number number => number.Value,
@@ -19,7 +19,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			_ => ""
 		};
 
-	public object Cases(Expression.Case cases, Dictionary<IdValue, object> bindings)
+	public object Cases(Expression.Case cases, Dictionary<IdValue, object> bindings, object? hint = null)
 	{
 		foreach (var @case in cases.Cases)
 		{
@@ -36,7 +36,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		throw new Exception("Not all cases are defined!");
 	}
 
-	public object BinOp(Expression.BinaryOperator binOp, Dictionary<IdValue, object> bindings)
+	public object BinOp(Expression.BinaryOperator binOp, Dictionary<IdValue, object> bindings, object? hint = null)
 	{
 		if (binOp.Type == TokenTypes.MapsTo)
 		{
@@ -79,7 +79,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		throw new NotImplementedException();
 	}
 
-	public object Apply(Expression.Application app, Dictionary<IdValue, object> bindings)
+	public object Apply(Expression.Application app, Dictionary<IdValue, object> bindings, object? hint = null)
 	{
 		var func = Evaluate(app.Function, bindings);
 		if (func is IdValue id) func = FindFunction(id, bindings);

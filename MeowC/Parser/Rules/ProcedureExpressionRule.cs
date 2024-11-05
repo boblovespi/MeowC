@@ -12,6 +12,6 @@ public class ProcedureExpressionRule : PrefixExpressionRule
 		var statements = new List<Statement>();
 		while (parser.Peek.Type != TokenTypes.RBrace) statements.Add(parser.ParseStatement());
 		parser.Consume(TokenTypes.RBrace);
-		return new Expression.Procedure(statements);
+		return new Expression.Procedure(token, statements);
 	}
 }

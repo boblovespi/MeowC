@@ -15,6 +15,9 @@ public static class Rules
 	public static readonly ProcedureExpressionRule ProcedureExpression = new();
 	public static readonly CasesExpressionRule CasesExpression = new();
 
+	
+	public static readonly BinaryOperatorExpressionRule FunctionDefinitionExpression = new(Priorities.FunctionFormation, false);
+	
 	public static readonly BinaryOperatorExpressionRule LeftSumOperatorExpression = new(Priorities.Sum, true);
 	public static readonly BinaryOperatorExpressionRule LeftProductOperatorExpression = new(Priorities.Product, true);
 
@@ -46,6 +49,7 @@ public static class Rules
 		{ TokenTypes.Slash, LeftProductOperatorExpression },
 		{ TokenTypes.Equals, EqualsOperatorExpression },
 		{ TokenTypes.MapsTo, FunctionFormationExpression },
+		{ TokenTypes.FuncType, FunctionDefinitionExpression },
 	};
 
 	public static readonly IReadOnlyDictionary<string, CaseRule> CaseRules = new Dictionary<string, CaseRule>
