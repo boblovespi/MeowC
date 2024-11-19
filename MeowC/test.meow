@@ -10,6 +10,9 @@ let main: proc := []
     print "meow :3\n";
     print fac 7;
 };
+
+let tuple: i32 * i32 * i32 := (1, 2, 3);
+let union: i32 + u8 := 1;
 /*
 let num: i32 := 1 - 1 - 1;
 let id: i32toi32 := x |-> x + 1;

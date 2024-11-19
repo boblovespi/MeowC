@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-using MeowC.Interpreter.Types;
+﻿using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
 using Type = MeowC.Interpreter.Types.Type;
 
@@ -20,13 +19,16 @@ public class TypeEvaluator : IEvaluator<Type>
 			Expression.Prefix prefix => throw new NotImplementedException(),
 			Expression.Procedure => new Type.Builtin(Builtins.Proc),
 			Expression.String => Type.ConstString,
-			_ => throw new ArgumentOutOfRangeException(nameof(expression))
+			Expression.Unit => Type.Unit,
+			Expression.Tuple tuple => Tuple(tuple, bindings, hint),
+			_ => throw new NotImplementedException(
+				$"We are missing type checking for expression {expression.GetType()}! {expression.Token.ErrorString}")
 		};
 
 	public Type Cases(Expression.Case cases, Dictionary<IdValue, Type> bindings, Type? hint = null)
 	{
 		if (hint == null)
-			throw new Exception($"Our cases hint is null! help! at {cases.Token.ErrorString}");
+			throw new NotImplementedException($"Our cases hint is null! help! at {cases.Token.ErrorString}");
 		foreach (var @case in cases.Cases)
 		{
 			switch (@case)
@@ -45,13 +47,24 @@ public class TypeEvaluator : IEvaluator<Type>
 		}
 
 		return hint;
-		throw new Exception($"Type checking not implemented for cases at {cases.Token.ErrorString}");
 	}
 
 	public Type BinOp(Expression.BinaryOperator binOp, Dictionary<IdValue, Type> bindings, Type? hint = null)
 	{
 		if (binOp.Type == TokenTypes.FuncType)
-			return new Type.Function(Evaluate(binOp.Left, bindings, hint), Evaluate(binOp.Right, bindings, hint));
+		{
+			var l = Evaluate(binOp.Left, bindings, hint);
+			if (l is Type.TypeIdentifier ll)
+				l = ll.Type;
+			var r = Evaluate(binOp.Right, bindings, hint);
+			if (r is Type.TypeIdentifier rr)
+				r = rr.Type;
+			return new Type.TypeIdentifier(new Type.Function(l, r));
+		}
+		// if (binOp.Type == TokenTypes.Times)
+		// 	return new Type.Product(Evaluate(binOp.Left, bindings, hint), Evaluate(binOp.Right, bindings, hint));
+		// if (binOp.Type == TokenTypes.Plus)
+		// 	return new Type.Sum(Evaluate(binOp.Left, bindings, hint), Evaluate(binOp.Right, bindings, hint));
 		if (binOp.Type == TokenTypes.MapsTo)
 			switch (hint)
 			{
@@ -82,8 +95,34 @@ public class TypeEvaluator : IEvaluator<Type>
 				false => throw new Exception($"Cannot compare values of different types {l}, {r} at {binOp.Token.ErrorString}")
 			};
 		}
-		
-		if (binOp.Type == TokenTypes.Times || binOp.Type == TokenTypes.Minus)
+
+		if (binOp.Type == TokenTypes.Times)
+		{
+			var l = Evaluate(binOp.Left, bindings);
+			var r = Evaluate(binOp.Right, bindings);
+			if (l is Type.TypeIdentifier ll && r is Type.TypeIdentifier rr)
+				return new Type.TypeIdentifier(new Type.Product(ll.Type, rr.Type));
+			return (IsNumeric(l) && IsNumeric(r), l & r) switch
+			{
+				(true, true) => l,
+				(true, false) => throw new Exception($"Cannot multiply values of different types {l}, {r} at {binOp.Token.ErrorString}"),
+				(false, _) => throw new Exception($"Cannot multiply values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
+			};
+		}
+		if (binOp.Type == TokenTypes.Plus)
+		{
+			var l = Evaluate(binOp.Left, bindings);
+			var r = Evaluate(binOp.Right, bindings);
+			if (l is Type.TypeIdentifier ll && r is Type.TypeIdentifier rr)
+				return new Type.TypeIdentifier(new Type.Sum(ll.Type, rr.Type));
+			return (IsNumeric(l) && IsNumeric(r), l & r) switch
+			{
+				(true, true) => l,
+				(true, false) => throw new Exception($"Cannot multiply values of different types {l}, {r} at {binOp.Token.ErrorString}"),
+				(false, _) => throw new Exception($"Cannot multiply values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
+			};
+		}
+		if (binOp.Type == TokenTypes.Slash || binOp.Type == TokenTypes.Minus)
 		{
 			var l = Evaluate(binOp.Left, bindings);
 			var r = Evaluate(binOp.Right, bindings);
@@ -95,7 +134,7 @@ public class TypeEvaluator : IEvaluator<Type>
 			};
 		}
 
-		throw new Exception($"Type checking not implemented for token at {binOp.Token.ErrorString}");
+		throw new NotImplementedException($"Type checking not implemented for token at {binOp.Token.ErrorString}");
 	}
 
 	public Type Apply(Expression.Application app, Dictionary<IdValue, Type> bindings, Type? hint = null)
@@ -110,18 +149,28 @@ public class TypeEvaluator : IEvaluator<Type>
 		};
 	}
 
+	private Type Tuple(Expression.Tuple tuple, Dictionary<IdValue, Type> bindings, Type? hint = null)
+	{
+		var product = Evaluate(tuple.Values[0], bindings);
+		for (var i = 1; i < tuple.Values.Count; i++)
+			product = new Type.Product(product, Evaluate(tuple.Values[i], bindings));
+
+		return new Type.Product(Type.Unit, Type.Unit);
+	}
+
 	private Type Id(Expression.Identifier identifier, Dictionary<IdValue, Type> bindings)
 	{
 		switch (identifier)
 		{
-			case { Name: "i32" }: return new Type.Builtin(Builtins.I32);
-			case { Name: "proc" }: return new Type.Builtin(Builtins.Proc);
+			case { Name: "i32" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.I32));
+			case { Name: "u8" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.U8));
+			case { Name: "proc" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
 			default:
 				var maybe = bindings.GetValueOrDefault(new IdValue(identifier.Name));
 				if (maybe == null) throw new Exception($"No identifier found for {identifier.Name} at {identifier.Token.ErrorString}");
 				return maybe;
 		}
 	}
-	
+
 	private bool IsNumeric(Type type) => type & new Type.IntLiteral(0);
 }

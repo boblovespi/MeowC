@@ -6,6 +6,13 @@ public abstract record Expression(Token Token)
 
 	public record Number(Token Token, long Value) : Expression(Token);
 
+	public record Unit(Token Token) : Expression(Token);
+
+	public record Tuple(Token Token, List<Expression> Values) : Expression(Token)
+	{
+		public override string ToString() => $"Tuple: (\n{string.Join(",\n\t", Values)}\n)";
+	}
+
 	public record String(Token Token, string Value) : Expression(Token);
 
 	public record Prefix(Token Token, TokenType Type, Expression Expression) : Expression(Token);
@@ -14,7 +21,7 @@ public abstract record Expression(Token Token)
 
 	public record Procedure(Token Token, List<Statement> Statements) : Expression(Token)
 	{
-		public override string ToString() => $"Procedure: \n{string.Join('\n', Statements)}";
+		public override string ToString() => $"Procedure: {{\n{string.Join(";\n", Statements)}\n}}";
 	}
 
 	public record Case(Token Token, List<Matches.Case> Cases) : Expression(Token)

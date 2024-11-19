@@ -13,13 +13,20 @@ public abstract record Type
 	public record IntLiteral(long Value) : Type;
 	
 	public record Function(Type From, Type To) : Type;
+	
+	public record Sum(Type Left, Type Right) : Type;
+	
+	public record Product(Type Left, Type Right) : Type;
 
 	public record CString : Type;
+	
+	public record TypeIdentifier(Type Type) : Type;
 
 	public static bool operator &(Type left, Type right)
 	{
 		if (left == right) return true;
 		if (left is IntLiteral && right is IntLiteral) return true;
+		if (left is TypeIdentifier lt && right is TypeIdentifier rt) return lt.Type & rt.Type;
 		return left switch
 		{
 			IntLiteral { Value: <= byte.MaxValue and >= byte.MinValue } => right is Builtin
