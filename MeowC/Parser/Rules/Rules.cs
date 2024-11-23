@@ -4,7 +4,8 @@ public static class Rules
 {
 	public static readonly DefinitionRule Definition = new();
 
-	public static readonly StatementRule Statement = new();
+	public static readonly CallStatementRule CallStatement = new();
+	public static readonly ReturnStatementRule ReturnStatement = new();
 
 	public static readonly IdentifierExpressionRule IdentifierExpression = new();
 	public static readonly NumberExpressionRule NumberExpression = new();

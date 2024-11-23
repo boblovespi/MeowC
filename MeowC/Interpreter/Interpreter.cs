@@ -41,6 +41,8 @@ public class Interpreter(List<Definition> definitions)
 					}
 				}
 				break;
+			case Statement.Return @return:
+				return;
 		}
 	}
 }

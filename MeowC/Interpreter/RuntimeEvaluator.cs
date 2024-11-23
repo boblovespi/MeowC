@@ -16,6 +16,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			Expression.Application app => Apply(app, bindings),
 			Expression.BinaryOperator binOp => BinOp(binOp, bindings),
 			Expression.Case @case => Cases(@case, bindings),
+			Expression.Procedure procedure => Procedure(procedure, bindings),
 			_ => ""
 		};
 
@@ -85,6 +86,11 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		if (func is IdValue id) func = FindFunction(id, bindings);
 		if (func is Func<object, object> f) return f(Evaluate(app.Argument, bindings));
 		throw new Exception("Not a function: " + app.Function);
+	}
+
+	public object Procedure(Expression.Procedure procedure, Dictionary<IdValue, object> bindings, object? hint = null)
+	{
+		throw new NotImplementedException();
 	}
 
 	private Func<object, object>? FindFunction(IdValue identifier, Dictionary<IdValue, object> bindings)

@@ -1,5 +1,6 @@
 ﻿using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
+using Microsoft.VisualBasic.CompilerServices;
 using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Interpreter;
@@ -15,10 +16,12 @@ public class TypeChecker(List<Definition> definitions)
 		foreach (var definition in Definitions)
 		{
 			var type = Evaluator.Evaluate(definition.Type, new Dictionary<IdValue, Type>(GlobalBindings));
-			if (type is Type.TypeIdentifier typeIdentifier)
-				GlobalBindings[new IdValue(definition.Id)] = typeIdentifier.Type;
-			else
-				throw new Exception($"Type {type} for definition {definition.Id} ought to be a type identifier");
+			GlobalBindings[new IdValue(definition.Id)] = type switch
+			{
+				Type.TypeIdentifier typeIdentifier => typeIdentifier.Type,
+				Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
+				_ => throw new Exception($"Type {type} for definition {definition.Id} ought to be a type identifier")
+			};
 		}
 
 		foreach (var definition in Definitions)

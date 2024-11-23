@@ -17,7 +17,13 @@ public class Parser(List<Token> tokens)
 
 	internal Definition ParseDefinition() => Rules.Rules.Definition.Parse(this);
 
-	internal Statement ParseStatement() => Rules.Rules.Statement.Parse(this);
+	internal Statement ParseStatement()
+	{
+		var token = Peek;
+		if (token.Type == TokenTypes.Keyword && token.Data == "return")
+			return Rules.Rules.ReturnStatement.Parse(this);
+		return Rules.Rules.CallStatement.Parse(this);
+	}
 
 	internal Expression ParseExpression(Priorities priority)
 	{

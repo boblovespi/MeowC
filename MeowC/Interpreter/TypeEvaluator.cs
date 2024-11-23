@@ -17,7 +17,7 @@ public class TypeEvaluator : IEvaluator<Type>
 			Expression.Identifier id => Id(id, bindings),
 			Expression.Number num => new Type.IntLiteral(num.Value),
 			Expression.Prefix prefix => throw new NotImplementedException(),
-			Expression.Procedure => new Type.Builtin(Builtins.Proc),
+			Expression.Procedure procedure => Procedure(procedure, bindings, hint),
 			Expression.String => Type.ConstString,
 			Expression.Unit => Type.Unit,
 			Expression.Tuple tuple => Tuple(tuple, bindings, hint),
@@ -61,10 +61,6 @@ public class TypeEvaluator : IEvaluator<Type>
 				r = rr.Type;
 			return new Type.TypeIdentifier(new Type.Function(l, r));
 		}
-		// if (binOp.Type == TokenTypes.Times)
-		// 	return new Type.Product(Evaluate(binOp.Left, bindings, hint), Evaluate(binOp.Right, bindings, hint));
-		// if (binOp.Type == TokenTypes.Plus)
-		// 	return new Type.Sum(Evaluate(binOp.Left, bindings, hint), Evaluate(binOp.Right, bindings, hint));
 		if (binOp.Type == TokenTypes.MapsTo)
 			switch (hint)
 			{
@@ -156,6 +152,11 @@ public class TypeEvaluator : IEvaluator<Type>
 			product = new Type.Product(product, Evaluate(tuple.Values[i], bindings));
 
 		return new Type.Product(Type.Unit, Type.Unit);
+	}
+
+	public Type Procedure(Expression.Procedure procedure, Dictionary<IdValue, Type> bindings, Type? hint = null)
+	{
+		return Type.Unit;
 	}
 
 	private Type Id(Expression.Identifier identifier, Dictionary<IdValue, Type> bindings)

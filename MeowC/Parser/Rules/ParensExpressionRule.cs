@@ -8,7 +8,10 @@ public class ParensExpressionRule : PrefixExpressionRule
 	{
 		// unit type
 		if (parser.Peek.Type == TokenTypes.RParen)
+		{
+			parser.Consume(TokenTypes.RParen);
 			return new Expression.Unit(token);
+		}
 		var exp = parser.ParseExpression(Priorities.No);
 		// singleton
 		if (parser.Peek.Type == TokenTypes.RParen)
