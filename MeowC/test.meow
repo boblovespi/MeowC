@@ -10,7 +10,7 @@ let main: 1 := []
     print "meow :3\n";
     print fac 7;
     print "\n";
-    print double double 50;
+    print double 500;
 };
 
 let double: i32 -> i32 := n |-> [] 

@@ -90,7 +90,33 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 
 	public object Procedure(Expression.Procedure procedure, Dictionary<IdValue, object> bindings, object? hint = null)
 	{
-		throw new NotImplementedException();
+		foreach (var statement in procedure.Statements)
+		{
+			switch (statement)
+			{
+				case Statement.Callable callable:
+					if (callable.Routine == "print")
+					{
+						var value = Evaluate(callable.Argument, bindings);
+						switch (value)
+						{
+							case long l and <= byte.MaxValue and >= byte.MinValue:
+								Console.Write((char)l);
+								break;
+							case long l:
+								Console.Write(l);
+								break;
+							default:
+								Console.Write(value.ToString());
+								break;
+						}
+					}
+					break;
+				case Statement.Return @return:
+					return Evaluate(@return.Argument, bindings);
+			}
+		}
+		return null;
 	}
 
 	private Func<object, object>? FindFunction(IdValue identifier, Dictionary<IdValue, object> bindings)

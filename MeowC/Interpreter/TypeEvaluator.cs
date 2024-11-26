@@ -156,6 +156,25 @@ public class TypeEvaluator : IEvaluator<Type>
 
 	public Type Procedure(Expression.Procedure procedure, Dictionary<IdValue, Type> bindings, Type? hint = null)
 	{
+		Type? type = null;
+		foreach (var statement in procedure.Statements)
+		{
+			switch (statement)
+			{
+				case Statement.Return @return:
+					if (type == null)
+						type = Evaluate(@return.Argument, bindings, hint);
+					else
+					{
+						var otherType = Evaluate(@return.Argument, bindings, hint);
+						if (!(type & otherType))
+							throw new Exception($"Type {otherType} does not match {type} at {@return.Argument.Token.ErrorString}");
+					}
+					if (hint != null && !(type & hint))
+						throw new Exception($"Expeted return of type {hint}, but got {type} at {@return.Argument.Token.ErrorString}");
+					break;
+			}
+		}
 		return Type.Unit;
 	}
 
