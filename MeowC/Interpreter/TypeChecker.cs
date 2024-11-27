@@ -1,6 +1,4 @@
-﻿using MeowC.Interpreter.Types;
-using MeowC.Parser.Matches;
-using Microsoft.VisualBasic.CompilerServices;
+﻿using MeowC.Parser.Matches;
 using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Interpreter;
@@ -18,7 +16,7 @@ public class TypeChecker(List<Definition> definitions)
 			var type = Evaluator.Evaluate(definition.Type, new Dictionary<IdValue, Type>(GlobalBindings));
 			GlobalBindings[new IdValue(definition.Id)] = type switch
 			{
-				Type.TypeIdentifier typeIdentifier => typeIdentifier.Type,
+				Type.TypeIdentifier => FixTypes(type),
 				Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
 				_ => throw new Exception($"Type {type} for definition {definition.Id} ought to be a type identifier")
 			};
@@ -32,6 +30,18 @@ public class TypeChecker(List<Definition> definitions)
 			Console.WriteLine(GlobalBindings[new IdValue(definition.Id)]);
 		}
 	}
+
+	private static Type FixTypes(Type type) =>
+		type switch
+		{
+			Type.Function function => new Type.Function(FixTypes(function.From), FixTypes(function.To)),
+			Type.Product product => new Type.Product(FixTypes(product.Left), FixTypes(product.Right)),
+			Type.Sum sum => new Type.Sum(FixTypes(sum.Left), FixTypes(sum.Right)),
+			Type.TypeIdentifier typeIdentifier => FixTypes(typeIdentifier.Type),
+			Type.Builtin or Type.CString or Type.Enum => type,
+			Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
+			_ => throw new Exception($"Type {type} for not fixable?")
+		};
 
 	private void CheckProcedure(Expression.Procedure procedure)
 	{

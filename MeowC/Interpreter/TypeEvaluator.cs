@@ -114,8 +114,8 @@ public class TypeEvaluator : IEvaluator<Type>
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new Exception($"Cannot multiply values of different types {l}, {r} at {binOp.Token.ErrorString}"),
-				(false, _) => throw new Exception($"Cannot multiply values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
+				(true, false) => throw new Exception($"Cannot add values of different types {l}, {r} at {binOp.Token.ErrorString}"),
+				(false, _) => throw new Exception($"Cannot add values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
 			};
 		}
 		if (binOp.Type == TokenTypes.Slash || binOp.Type == TokenTypes.Minus)
@@ -125,8 +125,8 @@ public class TypeEvaluator : IEvaluator<Type>
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new Exception($"Cannot multiply values of different types {l}, {r} at {binOp.Token.ErrorString}"),
-				(false, _) => throw new Exception($"Cannot multiply values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
+				(true, false) => throw new Exception($"Cannot subtract/divide values of different types {l}, {r} at {binOp.Token.ErrorString}"),
+				(false, _) => throw new Exception($"Cannot subtract/divide values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
 			};
 		}
 

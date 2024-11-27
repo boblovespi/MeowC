@@ -11,12 +11,15 @@ let main: 1 := []
     print fac 7;
     print "\n";
     print double 500;
+    print const();
 };
 
 let double: i32 -> i32 := n |-> [] 
 {
     return n * 2;
 };
+
+let const: 1 -> u8 := a |-> 'h';
 
 let tuple: i32 * i32 * i32 := (1, 2, 3);
 let union: i32 + u8 := 1;
