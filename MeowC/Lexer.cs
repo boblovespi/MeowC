@@ -32,7 +32,7 @@ public class Lexer(string lines)
 			}
 			else if (Peek == '\\')
 			{
-				// TODO: MACRO SYMBOL
+				EatMacro();
 			}
 			else if (char.IsWhiteSpace(Peek))
 				// NO OP: whitespace
@@ -110,6 +110,15 @@ public class Lexer(string lines)
 		var start = Current;
 		while (GreedySymbols.Contains(Peek)) Advance();
 		GreedySymbol(Lines.Substring(start, Current - start), 0, Current - start);
+	}
+
+	private void EatMacro()
+	{
+		var start = Current;
+		Advance();
+		while (char.IsLetter(Peek) || char.IsDigit(Peek)) Advance();
+		var str = Lines.Substring(start, Current - start);
+		Tokens.Add(new Token(Program.TokenMap[str], "", LineNum, ColNum));
 	}
 
 	/// <summary>

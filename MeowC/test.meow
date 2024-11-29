@@ -1,4 +1,4 @@
-﻿let fac: i32 -> i32 := n |-> {
+﻿let fac: i32 -> i32 := n \mt {
     1; if n = 0,
     n * fac(n - 1); otherwise.
 };
