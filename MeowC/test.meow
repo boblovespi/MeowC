@@ -15,6 +15,8 @@ let main: 1 := []
     print const();
     print "\n";
     print add(1000, 2000);
+    print '\n';
+    print (curryAdd 1000)2000;
 };
 
 let double: i32 -> i32 := n |-> [] 
@@ -25,6 +27,8 @@ let double: i32 -> i32 := n |-> []
 let const: 1 -> u8 := a |-> 'h';
 
 let add: i32 * i32 -> i32 := (x, y) |-> x + y;
+
+let curryAdd: i32 -> i32 -> i32 := x \mt (y \mt x + y);
 
 let tuple: i32 * i32 * i32 := (1, 2, 3);
 let union: i32 + u8 := 1;
