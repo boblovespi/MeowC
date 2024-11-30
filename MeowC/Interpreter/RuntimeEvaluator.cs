@@ -17,6 +17,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			Expression.BinaryOperator binOp => BinOp(binOp, bindings),
 			Expression.Case @case => Cases(@case, bindings),
 			Expression.Procedure procedure => Procedure(procedure, bindings),
+			Expression.Tuple tuple => Tuple(tuple, bindings),
 			_ => ""
 		};
 
@@ -42,16 +43,38 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		if (binOp.Type == TokenTypes.MapsTo)
 		{
 			var left = binOp.Left;
-			if (left is not Expression.Identifier bind) throw new Exception("Functions require bindings");
-			var bindId = new IdValue(bind.Name);
-			return new Func<object, object>(x =>
+			switch (left)
 			{
-				var newBindings = new Dictionary<IdValue, object>(bindings)
-				{
-					[bindId] = x
-				};
-				return Evaluate(binOp.Right, newBindings);
-			});
+				case Expression.Identifier bind:
+					var bindId = new IdValue(bind.Name);
+					return new Func<object, object>(x =>
+					{
+						var newBindings = new Dictionary<IdValue, object>(bindings)
+						{
+							[bindId] = x
+						};
+						return Evaluate(binOp.Right, newBindings);
+					});
+				case Expression.Tuple tuple:
+					return new Func<object, object>(x =>
+					{
+						if (x is not List<object> xs)
+							throw new Exception("Tuple takes a tuple");
+						var newBindings = new Dictionary<IdValue, object>(bindings);
+						for (int i = 0; i < tuple.Values.Count; i++)
+						{
+							var id = tuple.Values[i];
+							if (id is not Expression.Identifier idf)
+								throw new Exception("Functions require bindings!");
+							newBindings[new IdValue(idf.Name)] = xs[i];
+						}
+						return Evaluate(binOp.Right, newBindings);
+					});
+				default:
+					throw new Exception("Functions require bindings");
+			}
+			// if (left is not Expression.Identifier bind) throw new Exception("Functions require bindings");
+
 		}
 
 		if (binOp.Type == TokenTypes.Times)
@@ -67,6 +90,14 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			var left = Me.Unbind(Evaluate(binOp.Left, bindings), bindings);
 			var right = Me.Unbind(Evaluate(binOp.Right, bindings), bindings);
 			if (left is long ll && right is long rr) return ll - rr;
+			throw new Exception("Type mismatch");
+		}
+
+		if (binOp.Type == TokenTypes.Plus)
+		{
+			var left = Me.Unbind(Evaluate(binOp.Left, bindings), bindings);
+			var right = Me.Unbind(Evaluate(binOp.Right, bindings), bindings);
+			if (left is long ll && right is long rr) return ll + rr;
 			throw new Exception("Type mismatch");
 		}
 
@@ -118,6 +149,8 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		}
 		return null;
 	}
+
+	private object Tuple(Expression.Tuple tuple, Dictionary<IdValue, object> bindings) => tuple.Values.ConvertAll(x => Evaluate(x, bindings));
 
 	private Func<object, object>? FindFunction(IdValue identifier, Dictionary<IdValue, object> bindings)
 	{

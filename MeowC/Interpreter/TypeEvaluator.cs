@@ -70,13 +70,46 @@ public class TypeEvaluator : IEvaluator<Type>
 					return Evaluate(binOp.Right, bindings);
 				case Type.Function function:
 					var left = binOp.Left;
-					if (left is not Expression.Identifier bind)
-						throw new Exception($"Functions require bindings at {binOp.Token.ErrorString}");
-					var newBindings = new Dictionary<IdValue, Type>(bindings)
+					switch (function.From)
 					{
-						[new IdValue(bind.Name)] = function.From
-					};
-					return Evaluate(binOp.Right, newBindings, function.To);
+						case Type.Enum { Value: 1 }:
+							goto default;
+						case Type.Product:
+							{
+								if (left is not Expression.Tuple tuple)
+									throw new Exception($"Functions require bindings at {binOp.Token.ErrorString}");
+								var newBindings = new Dictionary<IdValue, Type>(bindings);
+								var right = function.From;
+                                // if (function.From is not Type.Product right)
+                                // 	throw new Exception($"Expected product type, got {function.From} at {binOp.Token.ErrorString}");
+                                for (int i = 0; i < tuple.Values.Count - 1; i++)
+								{
+                                    var value = tuple.Values[i];
+                                    if (right is not Type.Product rr)
+										throw new Exception($"Expected product type, got {function.From} at {binOp.Token.ErrorString}");
+									right = rr.Right;
+									var pleft = rr.Left;
+									if (value is not Expression.Identifier id)
+										throw new Exception($"Expected identifier for function, got {value} at {value.Token.ErrorString}");
+									newBindings[new IdValue(id.Name)] = pleft;
+								}
+								if (tuple.Values.Last() is not Expression.Identifier idL)
+									throw new Exception($"Expected identifier for function, got {tuple.Values.Last()} at {tuple.Values.Last().Token.ErrorString}");
+								newBindings[new IdValue(idL.Name)] = right;
+								return Evaluate(binOp.Right, newBindings, function.To);
+							}
+						default:
+							{
+								if (left is not Expression.Identifier bind)
+									throw new Exception($"Functions require bindings at {binOp.Token.ErrorString}");
+								var newBindings = new Dictionary<IdValue, Type>(bindings)
+								{
+									[new IdValue(bind.Name)] = function.From
+								};
+								return Evaluate(binOp.Right, newBindings, function.To);
+							}
+					}
+					throw new Exception("shouldn't be reached");
 				default:
 					throw new Exception($"Expected a function type but got {hint} instead at {binOp.Token.ErrorString}");
 			}
@@ -151,7 +184,7 @@ public class TypeEvaluator : IEvaluator<Type>
 		for (var i = 1; i < tuple.Values.Count; i++)
 			product = new Type.Product(product, Evaluate(tuple.Values[i], bindings));
 
-		return new Type.Product(Type.Unit, Type.Unit);
+		return product;
 	}
 
 	public Type Procedure(Expression.Procedure procedure, Dictionary<IdValue, Type> bindings, Type? hint = null)

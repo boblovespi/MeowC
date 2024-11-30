@@ -27,6 +27,7 @@ public abstract record Type
 		if (left == right) return true;
 		if (left is IntLiteral && right is IntLiteral) return true;
 		if (left is TypeIdentifier lt && right is TypeIdentifier rt) return lt.Type & rt.Type;
+		if (left is Product lp && right is Product rp) return lp.Left & rp.Left && lp.Right & rp.Right;
 		return left switch
 		{
 			IntLiteral { Value: <= byte.MaxValue and >= byte.MinValue } => right is Builtin
