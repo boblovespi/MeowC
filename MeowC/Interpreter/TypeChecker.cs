@@ -13,21 +13,35 @@ public class TypeChecker(List<Definition> definitions)
 	{
 		foreach (var definition in Definitions)
 		{
-			var type = Evaluator.Evaluate(definition.Type, new Dictionary<IdValue, Type>(GlobalBindings));
-			GlobalBindings[new IdValue(definition.Id)] = type switch
+			try
 			{
-				Type.TypeIdentifier => FixTypes(type),
-				Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
-				_ => throw new Exception($"Type {type} for definition {definition.Id} ought to be a type identifier")
-			};
+				var type = Evaluator.Evaluate(definition.Type, new Dictionary<IdValue, Type>(GlobalBindings));
+				GlobalBindings[new IdValue(definition.Id)] = type switch
+				{
+					Type.TypeIdentifier => FixTypes(type),
+					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
+					_ => throw new Exception($"Type {type} for definition {definition.Id} ought to be a type identifier")
+				};
+			}
+			catch (CompileException e)
+			{
+				Program.Error(e);
+			}
 		}
 
 		foreach (var definition in Definitions)
 		{
-			Evaluator.Evaluate(definition.Val, new Dictionary<IdValue, Type>(GlobalBindings), GlobalBindings[new IdValue(definition.Id)]);
+			try
+			{
+				Evaluator.Evaluate(definition.Val, new Dictionary<IdValue, Type>(GlobalBindings), GlobalBindings[new IdValue(definition.Id)]);
+			}
+			catch (CompileException e)
+			{
+				Program.Error(e);
+			}
 			if (definition is { Val: Expression.Procedure procedure })
 				CheckProcedure(procedure);
-			Console.WriteLine(GlobalBindings[new IdValue(definition.Id)]);
+			//Console.WriteLine(GlobalBindings[new IdValue(definition.Id)]);
 		}
 	}
 

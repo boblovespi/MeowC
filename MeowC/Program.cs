@@ -1,4 +1,5 @@
-﻿using MeowC.Generators;
+﻿using System.Xml.Xsl;
+using MeowC.Generators;
 using MeowC.Interpreter;
 
 namespace MeowC;
@@ -38,8 +39,8 @@ public static class Program
 			// foreach (var token in lexer.Tokens) Console.WriteLine(token);
 			var parser = new Parser.Parser(lexer.Tokens);
 			parser.Parse();
-			foreach (var def in parser.Definitions)
-				Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
+			//foreach (var def in parser.Definitions)
+			//	Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
 			var typer = new TypeChecker(parser.Definitions);
 			typer.Check();
 			var interpreter = new Interpreter.Interpreter(parser.Definitions);
@@ -53,5 +54,10 @@ public static class Program
 	public static void Error(int line, int column, string message)
 	{
 		Console.Error.WriteLine($"[{line}:{column}] Error: {message}");
+	}
+
+	public static void Error(CompileException exception)
+	{
+		Error(exception.Line, exception.Col, exception.Message);
 	}
 }

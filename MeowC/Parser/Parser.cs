@@ -12,7 +12,14 @@ public class Parser(List<Token> tokens)
 	public void Parse()
 	{
 		while (Peek.Type != TokenTypes.EndOfFile)
-			Definitions.Add(ParseDefinition());
+			try
+			{
+				Definitions.Add(ParseDefinition());
+			}
+			catch (WrongTokenException wte)
+			{
+				Program.Error(wte);
+			}
 	}
 
 	internal Definition ParseDefinition() => Rules.Rules.Definition.Parse(this);
@@ -84,7 +91,7 @@ public class Parser(List<Token> tokens)
 	internal void Consume(TokenType expected, string data)
 	{
 		if (Peek.Type != expected || (data != "" && Peek.Data != data))
-			throw new WrongTokenException(expected, Peek.Type);
+			throw new WrongTokenException(expected, Peek);
 		// Program.Error(Peek.Line, Peek.Col, $"Expected {expected}, but got {Peek.Data}");
 		CurrentIndex++;
 	}

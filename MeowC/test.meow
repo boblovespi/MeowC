@@ -2,6 +2,12 @@
     1; if n = 0,
     n * fac(n - 1); otherwise.
 };
+
+let fib: i32 -> i32 := n \mt {
+    0; if n = 0,
+    1; if n = 1,
+    fib(n - 1) + fib(n - 2); otherwise.
+};
 /*
 // test
 */
@@ -17,12 +23,16 @@ let main: 1 := []
     print add(1000, 2000);
     print '\n';
     print (curryAdd 1000)2000;
+    print '\n';
+    print fib 20;
 };
 
 let double: i32 -> i32 := n |-> [] 
 {
     return n * 2;
 };
+
+let error: u8aaa := 999999;
 
 let const: 1 -> u8 := a |-> 'h';
 
