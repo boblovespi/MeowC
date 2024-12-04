@@ -32,7 +32,7 @@ let double: i32 -> i32 := n |-> []
     return n * 2;
 };
 
-let error: u8aaa := 999999;
+let error: u8 := foo * bar;
 
 let const: 1 -> u8 := a |-> 'h';
 

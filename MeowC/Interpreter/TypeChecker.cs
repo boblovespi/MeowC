@@ -20,7 +20,7 @@ public class TypeChecker(List<Definition> definitions)
 				{
 					Type.TypeIdentifier => FixTypes(type),
 					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
-					_ => throw new Exception($"Type {type} for definition {definition.Id} ought to be a type identifier")
+					_ => throw new TokenException($"Type {type} for definition {definition.Id} ought to be a type identifier", definition.Val.Token)
 				};
 			}
 			catch (CompileException e)

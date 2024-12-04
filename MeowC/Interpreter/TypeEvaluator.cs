@@ -35,9 +35,9 @@ public class TypeEvaluator : IEvaluator<Type>
 			{
 				case Case.Bool boolCase:
 					if (!(Evaluate(boolCase.Pattern, bindings, Type.Bool) & Type.Bool))
-						throw new Exception($"Case patterns is not a boolean at {boolCase.Pattern.Token.ErrorString}");
+						throw new TokenException($"Case patterns is not a boolean", boolCase.Pattern.Token);
 					if (!(Evaluate(boolCase.Value, bindings, hint) & hint))
-						throw new Exception($"Expected case to be {hint} at {boolCase.Value.Token.ErrorString}");
+						throw new TokenException($"Expected case to be {hint}", boolCase.Value.Token);
 					break;
 
 				case Case.Otherwise otherwiseCase:
@@ -66,7 +66,7 @@ public class TypeEvaluator : IEvaluator<Type>
 			{
 				case null:
 					if (binOp.Left is not Expression.Identifier)
-						throw new Exception($"Functions require bindings at {binOp.Token.ErrorString}");
+						throw new TokenException("Functions require bindings", binOp.Token);
 					return Evaluate(binOp.Right, bindings);
 				case Type.Function function:
 					var left = binOp.Left;
@@ -77,7 +77,7 @@ public class TypeEvaluator : IEvaluator<Type>
 						case Type.Product:
 							{
 								if (left is not Expression.Tuple tuple)
-									throw new Exception($"Functions require bindings at {binOp.Token.ErrorString}");
+									throw new TokenException("Functions require bindings", binOp.Token);
 								var newBindings = new Dictionary<IdValue, Type>(bindings);
 								var right = function.From;
                                 // if (function.From is not Type.Product right)
@@ -135,7 +135,7 @@ public class TypeEvaluator : IEvaluator<Type>
 			{
 				(true, true) => l,
 				(true, false) => throw new Exception($"Cannot multiply values of different types {l}, {r} at {binOp.Token.ErrorString}"),
-				(false, _) => throw new Exception($"Cannot multiply values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
+				(false, _) => throw new TokenException($"Cannot multiply values of non-numeric types {l}, {r}", binOp.Token)
 			};
 		}
 		if (binOp.Type == TokenTypes.Plus)
@@ -220,7 +220,7 @@ public class TypeEvaluator : IEvaluator<Type>
 			case { Name: "proc" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
 			default:
 				var maybe = bindings.GetValueOrDefault(new IdValue(identifier.Name));
-				if (maybe == null) throw new Exception($"No identifier found for {identifier.Name} at {identifier.Token.ErrorString}");
+				if (maybe == null) throw new TokenException($"No identifier found for {identifier.Name}", identifier.Token);
 				return maybe;
 		}
 	}
