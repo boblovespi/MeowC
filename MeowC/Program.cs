@@ -8,6 +8,7 @@ public static class Program
 {
 	public static Dictionary<string, TokenType> TokenMap { get; } = new();
 	public static ISet<string> Keywords { get; } = new HashSet<string>();
+	private static bool Errored { get; set; } = false;
 
 	public static void Main(string[] args)
 	{
@@ -43,8 +44,11 @@ public static class Program
 			//	Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
 			var typer = new TypeChecker(parser.Definitions);
 			typer.Check();
-			var interpreter = new Interpreter.Interpreter(parser.Definitions);
-			interpreter.Run();
+			if (!Errored)
+			{
+				var interpreter = new Interpreter.Interpreter(parser.Definitions);
+				interpreter.Run();
+			}
 			// var outputter = new AMD64Gen(parser.Definitions);
 			// using (var writer = new StreamWriter("./test.s"))
 			// 	writer.Write(outputter.Output());
@@ -54,6 +58,7 @@ public static class Program
 	public static void Error(int line, int column, string message)
 	{
 		Console.Error.WriteLine($"[{line}:{column}] Error: {message}");
+		Errored = true;
 	}
 
 	public static void Error(CompileException exception)

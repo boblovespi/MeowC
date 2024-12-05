@@ -42,7 +42,7 @@ public class TypeEvaluator : IEvaluator<Type>
 
 				case Case.Otherwise otherwiseCase:
 					if (Evaluate(otherwiseCase.Value, bindings, hint) & hint) break;
-					throw new Exception($"Expected case to be {hint} at {otherwiseCase.Value.Token.ErrorString}");
+					throw new TokenException($"Expected case to be {hint}", otherwiseCase.Value.Token);
 			}
 		}
 
@@ -86,22 +86,22 @@ public class TypeEvaluator : IEvaluator<Type>
 								{
                                     var value = tuple.Values[i];
                                     if (right is not Type.Product rr)
-										throw new Exception($"Expected product type, got {function.From} at {binOp.Token.ErrorString}");
+										throw new TokenException($"Expected product type, got {function.From}", binOp.Token);
 									right = rr.Right;
 									var pleft = rr.Left;
 									if (value is not Expression.Identifier id)
-										throw new Exception($"Expected identifier for function, got {value} at {value.Token.ErrorString}");
+										throw new TokenException($"Expected identifier for function, got {value}", value.Token);
 									newBindings[new IdValue(id.Name)] = pleft;
 								}
 								if (tuple.Values.Last() is not Expression.Identifier idL)
-									throw new Exception($"Expected identifier for function, got {tuple.Values.Last()} at {tuple.Values.Last().Token.ErrorString}");
+									throw new TokenException($"Expected identifier for function, got {tuple.Values.Last()}", tuple.Values.Last().Token);
 								newBindings[new IdValue(idL.Name)] = right;
 								return Evaluate(binOp.Right, newBindings, function.To);
 							}
 						default:
 							{
 								if (left is not Expression.Identifier bind)
-									throw new Exception($"Functions require bindings at {binOp.Token.ErrorString}");
+									throw new TokenException($"Functions require bindings", binOp.Token);
 								var newBindings = new Dictionary<IdValue, Type>(bindings)
 								{
 									[new IdValue(bind.Name)] = function.From
@@ -111,7 +111,7 @@ public class TypeEvaluator : IEvaluator<Type>
 					}
 					throw new Exception("shouldn't be reached");
 				default:
-					throw new Exception($"Expected a function type but got {hint} instead at {binOp.Token.ErrorString}");
+					throw new TokenException($"Expected a function type but got {hint} instead", binOp.Token);
 			}
 
 		if (binOp.Type == TokenTypes.Equals)
@@ -121,7 +121,7 @@ public class TypeEvaluator : IEvaluator<Type>
 			return (l & r) switch
 			{
 				true => Type.Bool,
-				false => throw new Exception($"Cannot compare values of different types {l}, {r} at {binOp.Token.ErrorString}")
+				false => throw new TokenException($"Cannot compare values of different types {l}, {r}", binOp.Token)
 			};
 		}
 
@@ -134,7 +134,7 @@ public class TypeEvaluator : IEvaluator<Type>
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new Exception($"Cannot multiply values of different types {l}, {r} at {binOp.Token.ErrorString}"),
+				(true, false) => throw new TokenException($"Cannot multiply values of different types {l}, {r}", binOp.Token),
 				(false, _) => throw new TokenException($"Cannot multiply values of non-numeric types {l}, {r}", binOp.Token)
 			};
 		}
@@ -147,8 +147,8 @@ public class TypeEvaluator : IEvaluator<Type>
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new Exception($"Cannot add values of different types {l}, {r} at {binOp.Token.ErrorString}"),
-				(false, _) => throw new Exception($"Cannot add values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
+				(true, false) => throw new TokenException($"Cannot add values of different types {l}, {r}", binOp.Token),
+				(false, _) => throw new TokenException($"Cannot add values of non-numeric types {l}, {r}", binOp.Token)
 			};
 		}
 		if (binOp.Type == TokenTypes.Slash || binOp.Type == TokenTypes.Minus)
@@ -158,8 +158,8 @@ public class TypeEvaluator : IEvaluator<Type>
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new Exception($"Cannot subtract/divide values of different types {l}, {r} at {binOp.Token.ErrorString}"),
-				(false, _) => throw new Exception($"Cannot subtract/divide values of non-numeric types {l}, {r} at {binOp.Token.ErrorString}")
+				(true, false) => throw new TokenException($"Cannot subtract/divide values of different types {l}, {r}", binOp.Token),
+				(false, _) => throw new TokenException($"Cannot subtract/divide values of non-numeric types {l}, {r}", binOp.Token)
 			};
 		}
 
@@ -173,8 +173,8 @@ public class TypeEvaluator : IEvaluator<Type>
 		return fun switch
 		{
 			Type.Function f when f.From & arg => f.To,
-			Type.Function f => throw new Exception($"Type {f} takes a {f.From}, but got a {arg} at {app.Token.ErrorString}"),
-			_ => throw new Exception($"Type {fun} is not a function at {app.Token.ErrorString}")
+			Type.Function f => throw new TokenException($"Type {f} takes a {f.From}, but got a {arg}", app.Token),
+			_ => throw new TokenException($"Type {fun} is not a function", app.Token)
 		};
 	}
 
@@ -201,10 +201,10 @@ public class TypeEvaluator : IEvaluator<Type>
 					{
 						var otherType = Evaluate(@return.Argument, bindings, hint);
 						if (!(type & otherType))
-							throw new Exception($"Type {otherType} does not match {type} at {@return.Argument.Token.ErrorString}");
+							throw new TokenException($"Type {otherType} does not match {type}", @return.Argument.Token);
 					}
 					if (hint != null && !(type & hint))
-						throw new Exception($"Expeted return of type {hint}, but got {type} at {@return.Argument.Token.ErrorString}");
+						throw new TokenException($"Expeted return of type {hint}, but got {type}", @return.Argument.Token);
 					break;
 			}
 		}

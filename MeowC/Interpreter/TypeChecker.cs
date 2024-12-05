@@ -71,7 +71,6 @@ public class TypeChecker(List<Definition> definitions)
 				{
 					var value = Evaluator.Evaluate(callable.Argument, new Dictionary<IdValue, Type>(GlobalBindings));
 				}
-
 				break;
 		}
 	}
