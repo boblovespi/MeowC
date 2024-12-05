@@ -2,6 +2,7 @@
 FUNCTYPE ->
 DEF :=
 MAPSTO |-> \mt
+GETS <-
 LBRACK [
 RBRACK ]
 LPAREN (

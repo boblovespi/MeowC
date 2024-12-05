@@ -189,11 +189,24 @@ public class TypeEvaluator : IEvaluator<Type>
 
 	public Type Procedure(Expression.Procedure procedure, Dictionary<IdValue, Type> bindings, Type? hint = null)
 	{
+		var oldBindings = bindings;
+		bindings = new Dictionary<IdValue, Type>(bindings);
+		foreach (var definition in procedure.Definitions) 
+			bindings[new IdValue(definition.Id)] = TypeChecker.FixTypes(Evaluate(definition.Type, oldBindings));
 		Type? type = null;
 		foreach (var statement in procedure.Statements)
 		{
 			switch (statement)
 			{
+				case Statement.Assignment assignment:
+					Evaluate(assignment.Value, bindings, bindings[new IdValue(assignment.Variable)]);
+					break;
+				case Statement.Callable callable:
+					if (callable.Routine == "print")
+					{
+						var value = Evaluate(callable.Argument, bindings);
+					}
+					break;
 				case Statement.Return @return:
 					if (type == null)
 						type = Evaluate(@return.Argument, bindings, hint);
@@ -204,11 +217,13 @@ public class TypeEvaluator : IEvaluator<Type>
 							throw new TokenException($"Type {otherType} does not match {type}", @return.Argument.Token);
 					}
 					if (hint != null && !(type & hint))
-						throw new TokenException($"Expeted return of type {hint}, but got {type}", @return.Argument.Token);
+						throw new TokenException($"Expected return of type {hint}, but got {type}", @return.Argument.Token);
 					break;
+				default:
+					throw new NotImplementedException(nameof(statement));
 			}
 		}
-		return Type.Unit;
+		return type ?? Type.Unit;
 	}
 
 	private Type Id(Expression.Identifier identifier, Dictionary<IdValue, Type> bindings)

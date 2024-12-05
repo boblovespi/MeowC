@@ -16,7 +16,8 @@ public class Interpreter(List<Definition> definitions)
 
 	private void RunProcedure(Expression.Procedure procedure)
 	{
-		foreach (var statement in procedure.Statements) RunStatement(statement);
+		Evaluator.Evaluate(procedure, new());
+		// foreach (var statement in procedure.Statements) RunStatement(statement);
 	}
 
 	private void RunStatement(Statement statement)

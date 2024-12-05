@@ -29,6 +29,9 @@ public class Parser(List<Token> tokens)
 		var token = Peek;
 		if (token.Type == TokenTypes.Keyword && token.Data == "return")
 			return Rules.Rules.ReturnStatement.Parse(this);
+		var second = Tokens[CurrentIndex + 1];
+		if (second.Type == TokenTypes.Gets)
+			return Rules.Rules.AssignStatement.Parse(this);
 		return Rules.Rules.CallStatement.Parse(this);
 	}
 
@@ -53,6 +56,8 @@ public class Parser(List<Token> tokens)
 
 		return left;
 	}
+	
+	internal ProcedureDefinition ParseProcedureDefinition() => Rules.Rules.ProcedureDefinition.Parse(this);
 
 	private bool HasRule(Priorities priority, Token token, out InfixExpressionRule? infixRule,
 		out ApplicationExpressionRule? applicationRule)

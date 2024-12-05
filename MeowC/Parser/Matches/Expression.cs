@@ -19,7 +19,7 @@ public abstract record Expression(Token Token)
 
 	public record BinaryOperator(Token Token, TokenType Type, Expression Left, Expression Right) : Expression(Token);
 
-	public record Procedure(Token Token, List<Statement> Statements) : Expression(Token)
+	public record Procedure(Token Token, List<ProcedureDefinition> Definitions, List<Statement> Statements) : Expression(Token)
 	{
 		public override string ToString() => $"Procedure: {{\n{string.Join(";\n", Statements)}\n}}";
 	}

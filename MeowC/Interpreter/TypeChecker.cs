@@ -39,13 +39,13 @@ public class TypeChecker(List<Definition> definitions)
 			{
 				Program.Error(e);
 			}
-			if (definition is { Val: Expression.Procedure procedure })
-				CheckProcedure(procedure);
-			//Console.WriteLine(GlobalBindings[new IdValue(definition.Id)]);
+			// if (definition is { Val: Expression.Procedure procedure })
+				// CheckProcedure(procedure);
+			// Console.WriteLine(GlobalBindings[new IdValue(definition.Id)]);
 		}
 	}
 
-	private static Type FixTypes(Type type) =>
+	internal static Type FixTypes(Type type) =>
 		type switch
 		{
 			Type.Function function => new Type.Function(FixTypes(function.From), FixTypes(function.To)),

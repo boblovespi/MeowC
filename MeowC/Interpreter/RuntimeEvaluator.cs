@@ -68,13 +68,13 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 								throw new Exception("Functions require bindings!");
 							newBindings[new IdValue(idf.Name)] = xs[i];
 						}
+
 						return Evaluate(binOp.Right, newBindings);
 					});
 				default:
 					throw new Exception("Functions require bindings");
 			}
 			// if (left is not Expression.Identifier bind) throw new Exception("Functions require bindings");
-
 		}
 
 		if (binOp.Type == TokenTypes.Times)
@@ -115,20 +115,31 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 	{
 		var func = Evaluate(app.Function, bindings);
 		if (func is IdValue id) func = FindFunction(id, bindings);
-		if (func is Func<object, object> f) return f(Evaluate(app.Argument, bindings));
-		throw new Exception("Not a function: " + app.Function);
+		if (func is not Func<object, object> f) throw new Exception("Not a function: " + app.Function);
+		var arg = Evaluate(app.Argument, bindings);
+		if (arg is IdValue id2) arg = bindings[id2];
+		return f(arg);
 	}
 
 	public object Procedure(Expression.Procedure procedure, Dictionary<IdValue, object> bindings, object? hint = null)
 	{
+		var oldBindings = bindings;
+		bindings = new Dictionary<IdValue, object>(bindings);
+		foreach (var definition in procedure.Definitions)
+			bindings[new IdValue(definition.Id)] = new object();
 		foreach (var statement in procedure.Statements)
 		{
 			switch (statement)
 			{
-				case Statement.Callable callable:
-					if (callable.Routine == "print")
+				case Statement.Assignment(var variable, var expression):
+					var var = new IdValue(variable);
+					if (!bindings.ContainsKey(var)) throw new Exception($"Variable {variable} is not defined!");
+					bindings[var] = Evaluate(expression, bindings);
+					break;
+				case Statement.Callable(var routine, var expression):
+					if (routine == "print")
 					{
-						var value = Evaluate(callable.Argument, bindings);
+						var value = Evaluate(expression, bindings);
 						switch (value)
 						{
 							case long l and <= byte.MaxValue and >= byte.MinValue:
@@ -142,15 +153,20 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 								break;
 						}
 					}
+
 					break;
 				case Statement.Return @return:
 					return Evaluate(@return.Argument, bindings);
+				default:
+					throw new NotImplementedException(nameof(statement));
 			}
 		}
+
 		return null;
 	}
 
-	private object Tuple(Expression.Tuple tuple, Dictionary<IdValue, object> bindings) => tuple.Values.ConvertAll(x => Evaluate(x, bindings));
+	private object Tuple(Expression.Tuple tuple, Dictionary<IdValue, object> bindings) =>
+		tuple.Values.ConvertAll(x => Evaluate(x, bindings));
 
 	private Func<object, object>? FindFunction(IdValue identifier, Dictionary<IdValue, object> bindings)
 	{

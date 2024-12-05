@@ -11,13 +11,18 @@ let fib: i32 -> i32 := n \mt {
 /*
 // test
 */
-let main: 1 := []
+let main: 1 := [
+    num: i32;
+]
 {
+    num <- 1000;
     print "meow :3\n";
     print fac 7;
     print "\n";
-    print double 500;
+    print double num;
     print "\n";
+    num <- 2000;
+    print double num;
     print const();
     print "\n";
     print add(1000, 2000);

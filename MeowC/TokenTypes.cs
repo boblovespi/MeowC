@@ -19,6 +19,7 @@ public static class TokenTypes
 	public static readonly TokenType FuncType = MakeToken("FUNCTYPE");
 	public static readonly TokenType Def = MakeToken("DEF");
 	public static readonly TokenType MapsTo = MakeToken("MAPSTO");
+	public static readonly TokenType Gets = MakeToken("GETS");
 	public static readonly TokenType LBrack = MakeToken("LBRACK");
 	public static readonly TokenType RBrack = MakeToken("RBRACK");
 	public static readonly TokenType LParen = MakeToken("LPAREN");
