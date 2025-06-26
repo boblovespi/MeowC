@@ -77,6 +77,12 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			// if (left is not Expression.Identifier bind) throw new Exception("Functions require bindings");
 		}
 
+		switch (binOp)
+		{
+			case var _ when binOp.Type == TokenTypes.MapsTo:
+				break;
+		}
+
 		if (binOp.Type == TokenTypes.Times)
 		{
 			var left = Me.Unbind(Evaluate(binOp.Left, bindings), bindings);

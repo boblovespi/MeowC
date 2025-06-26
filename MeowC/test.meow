@@ -55,3 +55,14 @@ let m: i8 := 'm';
 */
 // let foo: bar := (A + B)(u + v);
 // let curry: a -> a -> a := a;
+
+/*
+let errorDiv: i32 * i32 -|exc|> i32 := (n, m) !-> {
+    exc.throws(); if m = 0,
+    n / m; otherwise.
+};
+
+let divByZero: i32 := {
+    0; when exc.throws,
+    x; otherwise.
+} with x := errorDiv(10, 0);*/

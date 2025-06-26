@@ -192,7 +192,7 @@ public class TypeEvaluator : IEvaluator<Type>
 		var oldBindings = bindings;
 		bindings = new Dictionary<IdValue, Type>(bindings);
 		foreach (var definition in procedure.Definitions) 
-			bindings[new IdValue(definition.Id)] = TypeChecker.FixTypes(Evaluate(definition.Type, oldBindings));
+			bindings[new IdValue(definition.Id)] = TypeChecker.NormalizeTypes(Evaluate(definition.Type, oldBindings));
 		Type? type = null;
 		foreach (var statement in procedure.Statements)
 		{

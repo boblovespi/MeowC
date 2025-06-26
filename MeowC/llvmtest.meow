@@ -1,0 +1,9 @@
+﻿let main: 1 := [
+    num: i32;
+]
+{
+    num <- 10;
+    num <- num + 10;
+};
+
+let foo: i32 -> i32 := x \mt x + x + 10 + 20;

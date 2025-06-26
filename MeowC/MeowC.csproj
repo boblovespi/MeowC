@@ -9,7 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="LLVMSharp" Version="16.0.0" />
+      <PackageReference Include="libLLVM" Version="20.1.2" />
+      <PackageReference Include="LLVMSharp" Version="20.1.2" />
+      <PackageReference Include="LLVMSharp.Interop" Version="20.1.2" />
     </ItemGroup>
-
+    <PropertyGroup>
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+    </PropertyGroup>
 </Project>

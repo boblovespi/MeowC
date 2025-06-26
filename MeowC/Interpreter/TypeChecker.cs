@@ -18,7 +18,7 @@ public class TypeChecker(List<Definition> definitions)
 				var type = Evaluator.Evaluate(definition.Type, new Dictionary<IdValue, Type>(GlobalBindings));
 				GlobalBindings[new IdValue(definition.Id)] = type switch
 				{
-					Type.TypeIdentifier => FixTypes(type),
+					Type.TypeIdentifier => NormalizeTypes(type),
 					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
 					_ => throw new TokenException($"Type {type} for definition {definition.Id} ought to be a type identifier", definition.Val.Token)
 				};
@@ -45,13 +45,19 @@ public class TypeChecker(List<Definition> definitions)
 		}
 	}
 
-	internal static Type FixTypes(Type type) =>
+	/// <summary>
+	///  Normalizes a type (i.e. turns an expression tree into its reduced form)
+	/// </summary>
+	/// <param name="type"></param>
+	/// <returns></returns>
+	/// <exception cref="Exception"></exception>
+	internal static Type NormalizeTypes(Type type) =>
 		type switch
 		{
-			Type.Function function => new Type.Function(FixTypes(function.From), FixTypes(function.To)),
-			Type.Product product => new Type.Product(FixTypes(product.Left), FixTypes(product.Right)),
-			Type.Sum sum => new Type.Sum(FixTypes(sum.Left), FixTypes(sum.Right)),
-			Type.TypeIdentifier typeIdentifier => FixTypes(typeIdentifier.Type),
+			Type.Function function => new Type.Function(NormalizeTypes(function.From), NormalizeTypes(function.To)),
+			Type.Product product => new Type.Product(NormalizeTypes(product.Left), NormalizeTypes(product.Right)),
+			Type.Sum sum => new Type.Sum(NormalizeTypes(sum.Left), NormalizeTypes(sum.Right)),
+			Type.TypeIdentifier typeIdentifier => NormalizeTypes(typeIdentifier.Type),
 			Type.Builtin or Type.CString or Type.Enum => type,
 			Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
 			_ => throw new Exception($"Type {type} for not fixable?")

@@ -52,6 +52,9 @@ public static class Program
 			// var outputter = new AMD64Gen(parser.Definitions);
 			// using (var writer = new StreamWriter("./test.s"))
 			// 	writer.Write(outputter.Output());
+			
+			var llvmGen = new LLVMGen(parser.Definitions);
+			llvmGen.Compile();
 		}
 	}
 

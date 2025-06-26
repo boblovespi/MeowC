@@ -1,72 +1,84 @@
-﻿using LLVMSharp;
+﻿using System.Runtime.InteropServices;
 using LLVMSharp.Interop;
 using MeowC.Interpreter;
 using MeowC.Parser.Matches;
 
 namespace MeowC.Generators;
 
-public class LLVMGen : IEvaluator<LLVMValueRef>
+public unsafe class LLVMGen
 {
-	public LLVMContext Context { get; }
+	public LLVMGen(List<Definition> definitions)
+	{
+		Definitions = definitions;
+		Context = LLVM.ContextCreate();
+		Builder = LLVM.CreateBuilder();
+		Module = LLVM.ModuleCreateWithName(PinString("meowc"));
+		Evaluator = new(Context, Builder, Module);
+	}
+
+	public List<Definition> Definitions { get; }
+	public LLVMContextRef Context { get; }
 	public LLVMBuilderRef Builder { get; }
-	public Module Module { get; }
+	public LLVMModuleRef Module { get; }
 	public Dictionary<string, LLVMValueRef> NamedValues { get; } = new();
+	private LLVMEvaluator Evaluator { get; }
 
-	public LLVMValueRef Evaluate(Expression expression, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default) =>
-		expression switch
-		{
-			Expression.Application app => Apply(app, bindings, hint),
-			Expression.BinaryOperator binOp => BinOp(binOp, bindings, hint),
-			Expression.Case @case => Cases(@case, bindings, hint),
-			Expression.Identifier id => Id(id, bindings),
-			Expression.Number num => Num(num, bindings),
-			Expression.Prefix prefix => throw new NotImplementedException(),
-			Expression.Procedure procedure => Procedure(procedure, bindings, hint),
-			Expression.String => null,
-			Expression.Unit => null,
-			Expression.Tuple tuple => null,
-			_ => throw new NotImplementedException(
-				$"We are missing type checking for expression {expression.GetType()}! {expression.Token.ErrorString}")
-		};
-
-	private LLVMValueRef Id(Expression.Identifier id, Dictionary<IdValue, LLVMValueRef> bindings)
+	public void Compile()
 	{
-		if (!bindings.TryGetValue(new IdValue(id.Name), out var value))
-			throw new TokenException($"{id.Name} is undefined", id.Token);
-		return value;
-	}
-
-	private LLVMValueRef Num(Expression.Number num, Dictionary<IdValue, LLVMValueRef> bindings)
-	{
-		unsafe
+		foreach (var definition in Definitions)
 		{
-			return LLVM.ConstInt(LLVM.Int64Type(), (ulong)num.Value, 0);
+			if (definition is { Id: "main", Val: Expression.Procedure procedure })
+				GenMainDef("main", procedure);
+			else if (definition is { Val: Expression.BinaryOperator binop } && binop.Type == TokenTypes.MapsTo)
+				GenFunctionDef(definition.Id, binop.Left, binop.Right);
 		}
+
+		Console.Write(Module.PrintToString());
 	}
 
-	public LLVMValueRef Cases(Expression.Case cases, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
+	private void GenMainDef(string name, Expression body)
 	{
-		throw new NotImplementedException();
+		// GenFunctionDef("main", Expression., body);
 	}
 
-	public LLVMValueRef BinOp(Expression.BinaryOperator binOp, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
+	private void GenFunctionDef(string functionName, Expression args, Expression body)
 	{
-		var left = Evaluate(binOp.Left, bindings, hint);
-		var right = Evaluate(binOp.Right, bindings, hint);
-		return binOp switch
+		int argCount;
+		var argNames = new List<string>();
+		switch (args)
 		{
-			not null when binOp.Type == TokenTypes.Plus => Builder.BuildAdd(left, right, "addtemp"),
-			_ => throw new NotImplementedException()
-		};
+			case Expression.Identifier bind:
+				var bindId = new IdValue(bind.Name);
+				argCount = 1;
+				argNames.Add(bindId.Name);
+				break;
+			case Expression.Tuple tuple:
+				throw new NotImplementedException("idk");
+			default:
+				throw new Exception("Functions require bindings");
+		}
+		
+		var llvmargs = new LLVMTypeRef[argCount];
+		llvmargs[0] = LLVMTypeRef.Int32;
+
+		var ftype = LLVMTypeRef.CreateFunction(LLVMTypeRef.Int32, llvmargs);
+		var function = Module.AddFunction(functionName, ftype);
+		var bindings = new Dictionary<IdValue, LLVMValueRef>();
+		for (int i = 0; i < argNames.Count; i++)
+		{
+			var param = LLVM.GetParam(function, (uint)i);
+			LLVM.SetValueName(param, PinString(argNames[i]));
+			bindings[new IdValue(argNames[i])] = param;
+		}
+
+		var bb = LLVM.AppendBasicBlock(function, PinString("entry"));
+		LLVM.PositionBuilderAtEnd(Builder, bb);
+		var ret = Evaluator.Evaluate(body, bindings);
+		Builder.BuildRet(ret);
 	}
 
-	public LLVMValueRef Apply(Expression.Application app, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
+	private sbyte* PinString(string str)
 	{
-		throw new NotImplementedException();
-	}
-
-	public LLVMValueRef Procedure(Expression.Procedure procedure, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
-	{
-		throw new NotImplementedException();
+		return (sbyte*)Marshal.StringToHGlobalAnsi(str);
 	}
 }
