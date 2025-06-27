@@ -1,23 +1,22 @@
-﻿using LLVMSharp;
-using LLVMSharp.Interop;
+﻿using LLVMSharp.Interop;
 using MeowC.Interpreter;
+using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
+using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Generators;
 
-public class LLVMEvaluator : IEvaluator<LLVMValueRef>
+public class LLVMEvaluator(
+	LLVMContextRef context,
+	LLVMBuilderRef builder,
+	LLVMModuleRef module,
+	Dictionary<Expression, Type> typeTable,
+	LLVMGen gen) : IEvaluator<LLVMValueRef>
 {
-	public LLVMEvaluator(LLVMContextRef context, LLVMBuilderRef builder, LLVMModuleRef module)
-	{
-		Context = context;
-		Builder = builder;
-		Module = module;
-	}
-
-	public LLVMContextRef Context { get; }
-	public LLVMBuilderRef Builder { get; }
-	public LLVMModuleRef Module { get; }
-	public Dictionary<string, LLVMValueRef> NamedValues { get; } = new();
+	public LLVMContextRef Context { get; } = context;
+	public LLVMBuilderRef Builder { get; } = builder;
+	public LLVMModuleRef Module { get; } = module;
+	public Dictionary<Expression, Type> TypeTable { get; } = typeTable;
 
 	public LLVMValueRef Evaluate(Expression expression, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default) =>
 		expression switch
@@ -29,17 +28,23 @@ public class LLVMEvaluator : IEvaluator<LLVMValueRef>
 			Expression.Number num => Num(num, bindings),
 			Expression.Prefix prefix => throw new NotImplementedException(),
 			Expression.Procedure procedure => Procedure(procedure, bindings, hint),
-			Expression.String => null,
+			Expression.String @string => Builder.BuildGlobalString(@string.Value + "\0"),
 			Expression.Unit => null,
 			Expression.Tuple tuple => null,
 			_ => throw new NotImplementedException(
-				$"We are missing type checking for expression {expression.GetType()}! {expression.Token.ErrorString}")
+				$"We are missing llvm emission for expression {expression.GetType()}! {expression.Token.ErrorString}")
 		};
 
 	private LLVMValueRef Id(Expression.Identifier id, Dictionary<IdValue, LLVMValueRef> bindings)
 	{
 		if (!bindings.TryGetValue(new IdValue(id.Name), out var value))
-			throw new TokenException($"{id.Name} is undefined", id.Token);
+		{
+			var newName = id.Name + "_" + TypeTable[id];
+			var func = Module.GetNamedFunction(id.Name);
+			if (func.Handle == IntPtr.Zero)
+				throw new TokenException($"{id.Name} is undefined", id.Token);
+			return func;
+		}
 		return value;
 	}
 
@@ -47,7 +52,7 @@ public class LLVMEvaluator : IEvaluator<LLVMValueRef>
 	{
 		unsafe
 		{
-			return LLVM.ConstInt(LLVM.Int64Type(), (ulong)num.Value, 0);
+			return LLVM.ConstInt(Context.Int32Type, (ulong)num.Value, 0);
 		}
 	}
 
@@ -63,17 +68,53 @@ public class LLVMEvaluator : IEvaluator<LLVMValueRef>
 		return binOp switch
 		{
 			_ when binOp.Type == TokenTypes.Plus => Builder.BuildAdd(left, right, "addtemp"),
+			_ when binOp.Type == TokenTypes.Minus => Builder.BuildSub(left, right, "subtemp"),
+			_ when binOp.Type == TokenTypes.Times => Builder.BuildMul(left, right, "multemp"),
+			_ when binOp.Type == TokenTypes.Slash => Builder.BuildSDiv(left, right, "sdivtemp"),
 			_ => throw new NotImplementedException()
 		};
 	}
 
 	public LLVMValueRef Apply(Expression.Application app, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
 	{
-		throw new NotImplementedException();
+		var func = Evaluate(app.Function, bindings);
+		var args = new LLVMValueRef[1];
+		args[0] = Evaluate(app.Argument, bindings);
+		var funcType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Int32, [LLVMTypeRef.Int32]);
+		return Builder.BuildCall2(funcType, func, args, "calltemp");
 	}
 
 	public LLVMValueRef Procedure(Expression.Procedure procedure, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
 	{
 		throw new NotImplementedException();
+	}
+
+	public LLVMTypeRef LLVMType(Type type)
+	{
+		return type switch
+		{
+			Type.Builtin builtin => builtin.Value switch
+			{
+				Builtins.I8 => Context.Int8Type,
+				Builtins.I16 => Context.Int16Type,
+				Builtins.I32 => Context.Int32Type,
+				Builtins.I64 => Context.Int64Type,
+				Builtins.U8 => Context.Int8Type,
+				Builtins.U16 => Context.Int16Type,
+				Builtins.U32 => Context.Int32Type,
+				Builtins.U64 => Context.Int64Type,
+				Builtins.F32 => Context.FloatType,
+				Builtins.F64 => Context.DoubleType,
+				Builtins.Proc => throw new NotImplementedException()
+			},
+			Type.CString cString => Context.GetIntPtrType(gen.DataLayout),
+			Type.Enum @enum => Context.Int8Type,
+			Type.Function function => throw new NotImplementedException(),
+			Type.IntLiteral intLiteral => throw new NotImplementedException(),
+			Type.Product product => throw new NotImplementedException(),
+			Type.Sum sum => throw new NotImplementedException(),
+			Type.TypeIdentifier typeIdentifier => throw new NotImplementedException(),
+			_ => throw new ArgumentOutOfRangeException(nameof(type))
+		};
 	}
 }

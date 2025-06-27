@@ -4,12 +4,13 @@ using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Interpreter;
 
-public class TypeEvaluator : IEvaluator<Type>
+public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<Type>
 {
 	// private IEvaluator<Type> Me => this;
 
-	public Type Evaluate(Expression expression, Dictionary<IdValue, Type> bindings, Type? hint = null) =>
-		expression switch
+	public Type Evaluate(Expression expression, Dictionary<IdValue, Type> bindings, Type? hint = null)
+	{
+		var type = expression switch
 		{
 			Expression.Application app => Apply(app, bindings, hint),
 			Expression.BinaryOperator binOp => BinOp(binOp, bindings, hint),
@@ -24,6 +25,9 @@ public class TypeEvaluator : IEvaluator<Type>
 			_ => throw new NotImplementedException(
 				$"We are missing type checking for expression {expression.GetType()}! {expression.Token.ErrorString}")
 		};
+		typeTable[expression] = type;
+		return type;
+	}
 
 	public Type Cases(Expression.Case cases, Dictionary<IdValue, Type> bindings, Type? hint = null)
 	{

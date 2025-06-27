@@ -3,11 +3,18 @@ using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Interpreter;
 
-public class TypeChecker(List<Definition> definitions)
+public class TypeChecker
 {
-	private List<Definition> Definitions { get; } = definitions;
-	private TypeEvaluator Evaluator { get; } = new();
+	public TypeChecker(List<Definition> definitions)
+	{
+		Definitions = definitions;
+		Evaluator = new(TypeTable);
+	}
+
+	private List<Definition> Definitions { get; }
+	private TypeEvaluator Evaluator { get; }
 	private Dictionary<IdValue, Type> GlobalBindings { get; } = new();
+	public Dictionary<Expression, Type> TypeTable { get; } = new();
 
 	public void Check()
 	{
@@ -22,6 +29,7 @@ public class TypeChecker(List<Definition> definitions)
 					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
 					_ => throw new TokenException($"Type {type} for definition {definition.Id} ought to be a type identifier", definition.Val.Token)
 				};
+				TypeTable[definition.Val] = GlobalBindings[new IdValue(definition.Id)];
 			}
 			catch (CompileException e)
 			{

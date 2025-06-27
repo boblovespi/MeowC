@@ -53,7 +53,7 @@ public static class Program
 			// using (var writer = new StreamWriter("./test.s"))
 			// 	writer.Write(outputter.Output());
 			
-			var llvmGen = new LLVMGen(parser.Definitions);
+			var llvmGen = new LLVMGen(parser.Definitions, typer.TypeTable);
 			llvmGen.Compile();
 		}
 	}

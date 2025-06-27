@@ -1,9 +1,16 @@
-﻿let main: 1 := [
+﻿let foo: i32 -> i32 := x \mt x * x + x + 10 + 20;
+
+let bar: i32 -> i32 := y \mt foo y + foo(y + 1);
+
+let main: 1 := [
     num: i32;
 ]
 {
     num <- 10;
     num <- num + 10;
+    print "x: 1, y: ";
+    print foo 1;
+    print ", z: ";
+    print bar 1;
+    print "\n";
 };
-
-let foo: i32 -> i32 := x \mt x + x + 10 + 20;
