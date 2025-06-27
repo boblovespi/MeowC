@@ -45,6 +45,7 @@ public class LLVMEvaluator(
 				throw new TokenException($"{id.Name} is undefined", id.Token);
 			return func;
 		}
+
 		return value.IsAAllocaInst != null ? Builder.BuildLoad2(LLVMType(TypeTable[id]), value, "loadtmp") : value;
 	}
 
@@ -58,7 +59,45 @@ public class LLVMEvaluator(
 
 	public LLVMValueRef Cases(Expression.Case cases, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
 	{
-		throw new NotImplementedException();
+		var func = Builder.InsertBlock.Parent;
+		var finallyBB = func.AppendBasicBlock("finally");
+		var nextBB =  func.AppendBasicBlock("ifnot");
+		var phiVal = new List<LLVMValueRef>();
+		var phiBlock = new List<LLVMBasicBlockRef>();
+		foreach (var @case in cases.Cases)
+		{
+			LLVMValueRef result;
+			switch (@case)
+			{
+				case Case.Bool(var expression, var pattern):
+					var cond = Evaluate(pattern, bindings);
+					var caseBB = func.AppendBasicBlock("ifcase");
+					Builder.BuildCondBr(cond, caseBB, nextBB);
+					Builder.PositionAtEnd(caseBB);
+					result = Evaluate(expression, bindings);
+					Builder.BuildBr(finallyBB);
+					phiVal.Add(result);
+					phiBlock.Add(Builder.InsertBlock);
+					Builder.PositionAtEnd(nextBB);
+					nextBB =  func.AppendBasicBlock("ifnot");
+					break;
+				case Case.Otherwise otherwise:
+					var otherwiseBB = func.AppendBasicBlock("otherwise");
+					Builder.BuildBr(otherwiseBB);
+					Builder.PositionAtEnd(otherwiseBB);
+					result = Evaluate(otherwise.Value, bindings);
+					Builder.BuildBr(finallyBB);
+					phiVal.Add(result);
+					phiBlock.Add(Builder.InsertBlock);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(@case));
+			}
+		}
+		Builder.PositionAtEnd(finallyBB);
+		var phi = Builder.BuildPhi(LLVMType(TypeTable[cases]), "casetemp");
+		phi.AddIncoming(phiVal.ToArray(), phiBlock.ToArray(), (uint)phiVal.Count);
+		return phi;
 	}
 
 	public LLVMValueRef BinOp(Expression.BinaryOperator binOp, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
@@ -71,6 +110,7 @@ public class LLVMEvaluator(
 			_ when binOp.Type == TokenTypes.Minus => Builder.BuildSub(left, right, "subtemp"),
 			_ when binOp.Type == TokenTypes.Times => Builder.BuildMul(left, right, "multemp"),
 			_ when binOp.Type == TokenTypes.Slash => Builder.BuildSDiv(left, right, "sdivtemp"),
+			_ when binOp.Type == TokenTypes.Equals => Builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right, "eqtemp"),
 			_ => throw new NotImplementedException()
 		};
 	}

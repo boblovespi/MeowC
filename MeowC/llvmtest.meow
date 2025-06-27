@@ -2,6 +2,17 @@
 
 let bar: i32 -> i32 := y \mt foo y + foo(y + 1);
 
+let fac: i32 -> i32 := n \mt {
+    1; if n = 0,
+    n * fac(n - 1); otherwise.
+};
+
+let fib: i32 -> i32 := n \mt {
+    0; if n = 0,
+    1; if n = 1,
+    fib(n - 1) + fib(n - 2); otherwise.
+};
+
 let main: 1 := [
     num: i32;
 ]
@@ -15,5 +26,10 @@ let main: 1 := [
     num <- bar num;
     print "\nbar foo num: ";
     print num;
+    print "\n";
+    print "fac 10: ";
+    print fac 10;
+    print "\nfib 10: ";
+    print fib 10;
     print "\n";
 };

@@ -56,8 +56,10 @@ public unsafe class LLVMGen
 		Module.Dump();
 		Console.WriteLine();
 		var jit = Module.CreateMCJITCompiler();
-		jit.TargetMachine.EmitToFile(Module, "out.a", LLVMCodeGenFileType.LLVMAssemblyFile);
+		// jit.TargetMachine.EmitToFile(Module, "out.a", LLVMCodeGenFileType.LLVMAssemblyFile);
 		Target.EmitToFile(Module, "out.o", LLVMCodeGenFileType.LLVMObjectFile);
+		Target.EmitToFile(Module, "out.s", LLVMCodeGenFileType.LLVMAssemblyFile);
+		Module.WriteBitcodeToFile("out.b");
 	}
 
 	private void GenMainDef(string name, Expression.Procedure body)
@@ -148,5 +150,6 @@ public unsafe class LLVMGen
 		Builder.BuildRet(ret);
 		function.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction);
 		NamedValues[new IdValue(functionName)] = function;
+		// function.ViewFunctionCFG();
 	}
 }
