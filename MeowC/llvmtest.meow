@@ -7,10 +7,13 @@ let main: 1 := [
 ]
 {
     num <- 10;
-    num <- num + 10;
-    print "x: 1, y: ";
-    print foo 1;
-    print ", z: ";
-    print bar 1;
+    print "num: ";
+    print num;
+    num <- foo num;
+    print "\nfoo num: ";
+    print num;
+    num <- bar num;
+    print "\nbar foo num: ";
+    print num;
     print "\n";
 };

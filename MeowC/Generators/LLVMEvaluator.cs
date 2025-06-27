@@ -45,7 +45,7 @@ public class LLVMEvaluator(
 				throw new TokenException($"{id.Name} is undefined", id.Token);
 			return func;
 		}
-		return value;
+		return value.IsAAllocaInst != null ? Builder.BuildLoad2(LLVMType(TypeTable[id]), value, "loadtmp") : value;
 	}
 
 	private LLVMValueRef Num(Expression.Number num, Dictionary<IdValue, LLVMValueRef> bindings)
@@ -107,14 +107,10 @@ public class LLVMEvaluator(
 				Builtins.F64 => Context.DoubleType,
 				Builtins.Proc => throw new NotImplementedException()
 			},
-			Type.CString cString => Context.GetIntPtrType(gen.DataLayout),
+			Type.CString cString => gen.PtrType,
 			Type.Enum @enum => Context.Int8Type,
-			Type.Function function => throw new NotImplementedException(),
-			Type.IntLiteral intLiteral => throw new NotImplementedException(),
-			Type.Product product => throw new NotImplementedException(),
-			Type.Sum sum => throw new NotImplementedException(),
-			Type.TypeIdentifier typeIdentifier => throw new NotImplementedException(),
-			_ => throw new ArgumentOutOfRangeException(nameof(type))
+			Type.TypeIdentifier typeId => LLVMType(typeId.Type),
+			_ => throw new NotImplementedException(nameof(type))
 		};
 	}
 }

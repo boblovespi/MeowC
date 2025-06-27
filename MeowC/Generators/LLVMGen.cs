@@ -24,12 +24,11 @@ public unsafe class LLVMGen
 		Builder = LLVM.CreateBuilder();
 		Module = LLVMModuleRef.CreateWithName("meowc");
 		DataLayout = Target.CreateTargetDataLayout();
-		// Module.Target = LLVMTargetRef.DefaultTriple;
 		LLVM.SetModuleDataLayout(Module, DataLayout);
 		Evaluator = new(Context, Builder, Module, TypeTable, this);
 		PtrType = Context.GetIntPtrType(DataLayout);
 	}
-	
+
 	public LLVMTargetMachineRef Target { get; }
 	public List<Definition> Definitions { get; }
 	public Dictionary<Expression, Type> TypeTable { get; }
@@ -41,9 +40,9 @@ public unsafe class LLVMGen
 
 	public void Compile()
 	{
-		Module.AddFunction("print_i32_t", LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [LLVMTypeRef.Int32]));
-		Module.AddFunction("print_str_t", LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [PtrType]));
-		
+		Module.AddFunction("print:3i32_t", LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [LLVMTypeRef.Int32]));
+		Module.AddFunction("print:3str_t", LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [PtrType]));
+
 		foreach (var definition in Definitions)
 		{
 			Console.WriteLine(definition.Id);
@@ -67,6 +66,16 @@ public unsafe class LLVMGen
 		var bb = function.AppendBasicBlock("entry");
 		Builder.PositionAtEnd(bb);
 		var bindings = new Dictionary<IdValue, LLVMValueRef>(NamedValues);
+		foreach (var variable in body.Definitions)
+		{
+			var type = Evaluator.LLVMType(TypeTable[variable.Type]);
+			var varName = variable.Id;
+			var alloca = Builder.BuildAlloca(type, varName);
+			if (variable.Val is not null)
+				Builder.BuildStore(Evaluator.Evaluate(variable.Val, bindings), alloca);
+			bindings[new IdValue(variable.Id)] = alloca;
+		}
+
 		foreach (var statement in body.Statements)
 		{
 			switch (statement)
@@ -81,17 +90,24 @@ public unsafe class LLVMGen
 							Type.Builtin builtin => builtin.Value.ToString().ToLowerInvariant() + "_t",
 							{ } a => throw new ArgumentOutOfRangeException(a.ToString())
 						};
-						func = Module.GetNamedFunction($"{callable.Routine}_{typeStr}");
+						func = Module.GetNamedFunction($"{callable.Routine}:3{typeStr}");
 					}
+
 					var args = new LLVMValueRef[1];
-					args[0] =  Evaluator.Evaluate(callable.Argument, bindings);
+					args[0] = Evaluator.Evaluate(callable.Argument, bindings);
 					var funcType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [Evaluator.LLVMType(TypeTable[callable.Argument])]);
-					var ret =  Builder.BuildCall2(funcType, func, args, "calltemp");
+					var ret = Builder.BuildCall2(funcType, func, args);
+					break;
+				
+				case Statement.Assignment assignment:
+					var val = Evaluator.Evaluate(assignment.Value, bindings);
+					Builder.BuildStore(val, bindings[new IdValue(assignment.Variable)]);
 					break;
 				default:
 					break;
 			}
 		}
+
 		Builder.BuildRetVoid();
 		function.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction);
 	}

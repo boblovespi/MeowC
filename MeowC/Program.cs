@@ -49,6 +49,10 @@ public static class Program
 				var interpreter = new Interpreter.Interpreter(parser.Definitions);
 				interpreter.Run();
 			}
+			else
+			{
+				Console.WriteLine("something went wrong");
+			}
 			// var outputter = new AMD64Gen(parser.Definitions);
 			// using (var writer = new StreamWriter("./test.s"))
 			// 	writer.Write(outputter.Output());

@@ -146,6 +146,8 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 					if (routine == "print")
 					{
 						var value = Evaluate(expression, bindings);
+						if (value is IdValue id)
+							value = bindings[id];
 						switch (value)
 						{
 							case long l and <= byte.MaxValue and >= byte.MinValue:
