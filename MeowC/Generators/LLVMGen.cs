@@ -1,4 +1,5 @@
-﻿using LLVMSharp.Interop;
+﻿using System.Runtime.InteropServices;
+using LLVMSharp.Interop;
 using MeowC.Interpreter;
 using MeowC.Parser.Matches;
 using Type = MeowC.Interpreter.Types.Type;
@@ -26,7 +27,7 @@ public unsafe class LLVMGen
 		DataLayout = Target.CreateTargetDataLayout();
 		LLVM.SetModuleDataLayout(Module, DataLayout);
 		Evaluator = new(Context, Builder, Module, TypeTable, this);
-		PtrType = Context.GetIntPtrType(DataLayout);
+		PtrType = LLVMTypeRef.CreateIntPtr(DataLayout);
 	}
 
 	public LLVMTargetMachineRef Target { get; }
@@ -54,6 +55,27 @@ public unsafe class LLVMGen
 
 		// Console.Write(Module.PrintToString());
 		Module.Dump();
+		Module.PrintToFile("out.uoll");
+		Console.WriteLine();
+		// var fpm = Module.CreateFunctionPassManager();
+		// fpm.InitializeFunctionPassManager();
+		var pbo = LLVM.CreatePassBuilderOptions();
+
+		var passes = new MarshaledString("constmerge,mem2reg,always-inline,reassociate,aggressive-instcombine,simplifycfg,gvn,tailcallelim");
+		var err = LLVM.RunPasses(Module, passes, Target, pbo);
+
+		if (err != null)
+		{
+			Console.WriteLine("something went wrong in passes!");
+			var errorMessage = LLVM.GetErrorMessage(err);
+			var span = MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)errorMessage);
+			Console.WriteLine(span.AsString());
+		}
+
+		LLVM.DisposePassBuilderOptions(pbo);
+
+		Module.Dump();
+		Module.PrintToFile("out.opll");
 		Console.WriteLine();
 		var jit = Module.CreateMCJITCompiler();
 		// jit.TargetMachine.EmitToFile(Module, "out.a", LLVMCodeGenFileType.LLVMAssemblyFile);
@@ -64,7 +86,7 @@ public unsafe class LLVMGen
 
 	private void GenMainDef(string name, Expression.Procedure body)
 	{
-		var function = Module.AddFunction(name, LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [LLVMTypeRef.Void]));
+		var function = Module.AddFunction(name, LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, []));
 		var bb = function.AppendBasicBlock("entry");
 		Builder.PositionAtEnd(bb);
 		var bindings = new Dictionary<IdValue, LLVMValueRef>(NamedValues);
@@ -100,12 +122,10 @@ public unsafe class LLVMGen
 					var funcType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [Evaluator.LLVMType(TypeTable[callable.Argument])]);
 					var ret = Builder.BuildCall2(funcType, func, args);
 					break;
-				
+
 				case Statement.Assignment assignment:
 					var val = Evaluator.Evaluate(assignment.Value, bindings);
 					Builder.BuildStore(val, bindings[new IdValue(assignment.Variable)]);
-					break;
-				default:
 					break;
 			}
 		}

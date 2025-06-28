@@ -13,6 +13,31 @@ let fib: i32 -> i32 := n \mt {
     fib(n - 1) + fib(n - 2); otherwise.
 };
 
+let procBased: i32 -> i32 := n \mt [m: i32;]
+{
+    m <- n;
+    m <- m * n + 1;
+    return n * m + 2;
+};
+
+let test: i32 -> i32 := n \mt {
+    1; if n = 0,
+    [m: i32;] {
+        m <- n * n;
+        return m + n + test(n - 1);
+    }; otherwise.
+};
+
+let lotsAndLots: i32 -> i32 := n \mt {
+    n; if n = 0,
+    n - 10; if n = 1,
+    n * n; if n = 2,
+    n * n * n; if n = 3,
+    n + 10; if n = 100,
+    n + 100; if n = 1000,
+    n + 1; otherwise.
+};
+
 let main: 1 := [
     num: i32;
 ]
