@@ -26,6 +26,7 @@ public static class Rules
 	public static readonly BinaryOperatorExpressionRule LeftProductOperatorExpression = new(Priorities.Product, true);
 
 	public static readonly BinaryOperatorExpressionRule EqualsOperatorExpression = new(Priorities.Conditional, false);
+	public static readonly BinaryOperatorExpressionRule LessThanOperatorExpression = new(Priorities.Conditional, false);
 	public static readonly BinaryOperatorExpressionRule FunctionFormationExpression = new(Priorities.FunctionFormation, false);
 
 	public static readonly ApplicationExpressionRule ApplicationExpression = new();
@@ -52,6 +53,7 @@ public static class Rules
 		{ TokenTypes.Times, LeftProductOperatorExpression },
 		{ TokenTypes.Slash, LeftProductOperatorExpression },
 		{ TokenTypes.Equals, EqualsOperatorExpression },
+		{ TokenTypes.Less, LessThanOperatorExpression },
 		{ TokenTypes.MapsTo, FunctionFormationExpression },
 		{ TokenTypes.FuncType, FunctionDefinitionExpression },
 	};

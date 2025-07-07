@@ -113,6 +113,13 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			var right = Me.Unbind(Evaluate(binOp.Right, bindings), bindings);
 			return left.Equals(right);
 		}
+		if (binOp.Type == TokenTypes.Less)
+		{
+			var left = Me.Unbind(Evaluate(binOp.Left, bindings), bindings);
+			var right = Me.Unbind(Evaluate(binOp.Right, bindings), bindings);
+			if (left is long ll && right is long rr) return ll < rr;
+			throw new Exception("Type mismatch");
+		}
 
 		throw new NotImplementedException();
 	}

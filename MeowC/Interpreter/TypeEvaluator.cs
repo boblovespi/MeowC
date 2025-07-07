@@ -166,6 +166,17 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 				(false, _) => throw new TokenException($"Cannot subtract/divide values of non-numeric types {l}, {r}", binOp.Token)
 			};
 		}
+		if (binOp.Type == TokenTypes.Less)
+		{
+			var l = Evaluate(binOp.Left, bindings);
+			var r = Evaluate(binOp.Right, bindings);
+			return (IsNumeric(l) && IsNumeric(r), l & r) switch
+			{
+				(true, true) => Type.Bool,
+				(true, false) => throw new TokenException($"Cannot compare values of different types {l}, {r}", binOp.Token),
+				(false, _) => throw new TokenException($"Cannot compare values of non-numeric types {l}, {r}", binOp.Token)
+			};
+		}
 
 		throw new NotImplementedException($"Type checking not implemented for token at {binOp.Token.ErrorString}");
 	}

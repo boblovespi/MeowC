@@ -1,5 +1,4 @@
-﻿using LLVMSharp;
-using LLVMSharp.Interop;
+﻿using LLVMSharp.Interop;
 using MeowC.Interpreter;
 using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
@@ -109,6 +108,7 @@ public class LLVMEvaluator(
 			_ when binOp.Type == TokenTypes.Times => Builder.BuildMul(left, right, "multemp"),
 			_ when binOp.Type == TokenTypes.Slash => Builder.BuildSDiv(left, right, "sdivtemp"),
 			_ when binOp.Type == TokenTypes.Equals => Builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right, "eqtemp"),
+			_ when binOp.Type == TokenTypes.Less => Builder.BuildICmp(LLVMIntPredicate.LLVMIntSLT, left, right, "lesstemp"),
 			_ => throw new NotImplementedException()
 		};
 	}

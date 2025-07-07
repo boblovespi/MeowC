@@ -1,26 +1,26 @@
-﻿let foo: i32 -> i32 := x \mt x * x + x + 10 + 20;
+﻿let foo: i32 -> i32 := x |-> x * x + x + 10 + 20;
 
-let bar: i32 -> i32 := y \mt foo y + foo(y + 1);
+let bar: i32 -> i32 := y |-> foo y + foo(y + 1);
 
-let fac: i32 -> i32 := n \mt {
+let fac: i32 -> i32 := n |-> {
     1; if n = 0,
     n * fac(n - 1); otherwise.
 };
 
-let fib: i32 -> i32 := n \mt {
+let fib: i32 -> i32 := n |-> {
     0; if n = 0,
     1; if n = 1,
     fib(n - 1) + fib(n - 2); otherwise.
 };
 
-let procBased: i32 -> i32 := n \mt [m: i32;]
+let procBased: i32 -> i32 := n |-> [m: i32;]
 {
     m <- n;
     m <- m * n + 1;
     return n * m + 2;
 };
 
-let test: i32 -> i32 := n \mt {
+let test: i32 -> i32 := n |-> {
     1; if n = 0,
     [m: i32;] {
         m <- n * n;
@@ -28,14 +28,15 @@ let test: i32 -> i32 := n \mt {
     }; otherwise.
 };
 
-let lotsAndLots: i32 -> i32 := n \mt {
-    n; if n = 0,
-    n - 10; if n = 1,
-    n * n; if n = 2,
-    n * n * n; if n = 3,
-    n + 10; if n = 100,
-    n + 100; if n = 1000,
-    n + 1; otherwise.
+let lotsAndLots: i32 -> i32 := n |-> {
+    n;          if n = 0,
+    n - 10;     if n = 1,
+    n * n;      if n = 2,
+    n * n * n;  if n = 3,
+    n + 10;     if n = 100,
+    n + 100;    if n = 1000,
+    n + 12;     if n < 0,
+    n + 1;      otherwise.
 };
 
 let main: 1 := [
