@@ -6,12 +6,12 @@ using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Generators;
 
-public unsafe class LLVMGen
+public unsafe class LLVMGen(string targetFile)
 {
 	public LLVMTypeRef PtrType { get; }
 	public LLVMTargetDataRef DataLayout { get; }
 
-	public LLVMGen(List<Definition> definitions, Dictionary<Expression, Type> typeTable)
+	public LLVMGen(string targetFile, List<Definition> definitions, Dictionary<Expression, Type> typeTable) : this(targetFile)
 	{
 		LLVM.InitializeNativeTarget();
 		LLVM.InitializeNativeAsmParser();
@@ -54,9 +54,9 @@ public unsafe class LLVMGen
 		}
 
 		// Console.Write(Module.PrintToString());
-		Module.Dump();
-		Module.PrintToFile("out.uoll");
-		Console.WriteLine();
+		// Module.Dump();
+		Module.PrintToFile($"{targetFile}.uoll");
+		// Console.WriteLine();
 		// var fpm = Module.CreateFunctionPassManager();
 		// fpm.InitializeFunctionPassManager();
 		var pbo = LLVM.CreatePassBuilderOptions();
@@ -74,14 +74,14 @@ public unsafe class LLVMGen
 
 		LLVM.DisposePassBuilderOptions(pbo);
 
-		Module.Dump();
-		Module.PrintToFile("out.opll");
-		Console.WriteLine();
+		// Module.Dump();
+		Module.PrintToFile($"{targetFile}.opll");
+		// Console.WriteLine();
 		var jit = Module.CreateMCJITCompiler();
 		// jit.TargetMachine.EmitToFile(Module, "out.a", LLVMCodeGenFileType.LLVMAssemblyFile);
-		Target.EmitToFile(Module, "out.o", LLVMCodeGenFileType.LLVMObjectFile);
-		Target.EmitToFile(Module, "out.s", LLVMCodeGenFileType.LLVMAssemblyFile);
-		Module.WriteBitcodeToFile("out.b");
+		Target.EmitToFile(Module, $"{targetFile}.o", LLVMCodeGenFileType.LLVMObjectFile);
+		Target.EmitToFile(Module, $"{targetFile}.s", LLVMCodeGenFileType.LLVMAssemblyFile);
+		Module.WriteBitcodeToFile($"{targetFile}.b");
 	}
 
 	private void GenMainDef(string name, Expression.Procedure body)

@@ -19,6 +19,7 @@ public class Parser(List<Token> tokens)
 			catch (WrongTokenException wte)
 			{
 				Program.Error(wte);
+				Consume(wte.Actual);
 			}
 	}
 

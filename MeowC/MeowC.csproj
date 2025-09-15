@@ -9,6 +9,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="ConsoleAppFramework" Version="5.5.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
       <PackageReference Include="libLLVM" Version="20.1.2" />
       <PackageReference Include="LLVMSharp" Version="20.1.2" />
       <PackageReference Include="LLVMSharp.Interop" Version="20.1.2" />
