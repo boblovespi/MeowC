@@ -19,7 +19,7 @@ public static class Rules
 	public static readonly ProcedureExpressionRule ProcedureExpression = new();
 	public static readonly CasesExpressionRule CasesExpression = new();
 
-	
+	public static readonly BinaryOperatorExpressionRule PolymorphismDefinitionExpression = new(Priorities.PolymorphismFormation, false);
 	public static readonly BinaryOperatorExpressionRule FunctionDefinitionExpression = new(Priorities.FunctionFormation, false);
 	
 	public static readonly BinaryOperatorExpressionRule LeftSumOperatorExpression = new(Priorities.Sum, true);
@@ -28,6 +28,7 @@ public static class Rules
 	public static readonly BinaryOperatorExpressionRule EqualsOperatorExpression = new(Priorities.Conditional, false);
 	public static readonly BinaryOperatorExpressionRule LessThanOperatorExpression = new(Priorities.Conditional, false);
 	public static readonly BinaryOperatorExpressionRule FunctionFormationExpression = new(Priorities.FunctionFormation, false);
+	public static readonly BinaryOperatorExpressionRule PolymorphismFormationExpression = new(Priorities.PolymorphismFormation, false);
 
 	public static readonly ApplicationExpressionRule ApplicationExpression = new();
 
@@ -56,6 +57,8 @@ public static class Rules
 		{ TokenTypes.Less, LessThanOperatorExpression },
 		{ TokenTypes.MapsTo, FunctionFormationExpression },
 		{ TokenTypes.FuncType, FunctionDefinitionExpression },
+		{ TokenTypes.DoubleTo, PolymorphismDefinitionExpression },
+		{ TokenTypes.DoubleMapsTo, PolymorphismFormationExpression },
 	};
 
 	public static readonly IReadOnlyDictionary<string, CaseRule> CaseRules = new Dictionary<string, CaseRule>

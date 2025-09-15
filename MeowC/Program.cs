@@ -33,6 +33,7 @@ public static class Program
 
 		var app = ConsoleApp.Create();
 		app.Add("", Root);
+		app.Add("typecheck", Typecheck);
 		app.Run(args);
 	}
 
@@ -74,6 +75,30 @@ public static class Program
 
 		var llvmGen = new LLVMGen(output, parser.Definitions, typer.TypeTable);
 		llvmGen.Compile();
+	}
+
+	/// <summary>
+	/// Typecheck a meow program.
+	/// </summary>
+	/// <param name="targetFileName">File to typecheck</param>
+	public static void Typecheck([Argument] string targetFileName)
+	{
+		Info($"Compiling file {targetFileName}");
+		var targetFile = new FileInfo(targetFileName);
+		using var reader = targetFile.OpenText();
+		var lines = reader.ReadToEnd();
+		var lexer = new Lexer(lines);
+		lexer.Parse();
+		// foreach (var token in lexer.Tokens) Console.WriteLine(token);
+		var parser = new Parser.Parser(lexer.Tokens);
+		parser.Parse();
+		//foreach (var def in parser.Definitions)
+		//	Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
+		var typer = new TypeChecker(parser.Definitions);
+		typer.Check();
+		if (!Errored)
+			return;
+		Console.WriteLine("something went wrong");
 	}
 
 	public static void Info(string message)

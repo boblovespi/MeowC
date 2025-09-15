@@ -66,8 +66,9 @@ public class TypeChecker
 			Type.Product product => new Type.Product(NormalizeTypes(product.Left), NormalizeTypes(product.Right)),
 			Type.Sum sum => new Type.Sum(NormalizeTypes(sum.Left), NormalizeTypes(sum.Right)),
 			Type.TypeIdentifier typeIdentifier => NormalizeTypes(typeIdentifier.Type),
-			Type.Builtin or Type.CString or Type.Enum => type,
+			Type.Builtin or Type.CString or Type.Enum or Type.TypeUniverse or Type.Variable => type,
 			Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
+			Type.Polymorphic(var from, var typeClass, var to) => new Type.Polymorphic(from, NormalizeTypes(typeClass), NormalizeTypes(to)),
 			_ => throw new Exception($"Type {type} for not fixable?")
 		};
 

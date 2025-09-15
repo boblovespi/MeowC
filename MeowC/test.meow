@@ -66,3 +66,7 @@ let divByZero: i32 := {
     0; when exc.throws,
     x; otherwise.
 } with x := errorDiv(10, 0);*/
+
+let polytest: T => T -> i32 := T |=> t |-> 0;
+let id: T => T -> T := T |=> t |-> t;
+let id2: T => T -> T := T |=> t |-> id id t;

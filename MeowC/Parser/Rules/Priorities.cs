@@ -4,6 +4,7 @@ public enum Priorities
 {
 	No,
 	Assignment,
+	PolymorphismFormation,
 	FunctionFormation,
 	Conditional,
 	Sum,

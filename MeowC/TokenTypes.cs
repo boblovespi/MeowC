@@ -35,6 +35,8 @@ public static class TokenTypes
 	public static readonly TokenType Slash = MakeToken("SLASH");
 	public new static readonly TokenType Equals = MakeToken("EQUALS");
 	public static readonly TokenType Less = MakeToken("LESS");
+	public static readonly TokenType DoubleTo = MakeToken("DOUBLETO");
+	public static readonly TokenType DoubleMapsTo = MakeToken("DOUBLEMAPSTO");
 	public static readonly TokenType EndOfFile = MakeToken("EOF");
 
 	private static TokenType MakeToken(string name)

@@ -5,6 +5,7 @@ public abstract record Type
 	public static readonly Enum Unit = new(1);
 	public static readonly Enum Bool = new(2);
 	public static readonly CString ConstString = new();
+	public static readonly TypeUniverse Types = new(1);
 
 	public record Enum(int Value) : Type;
 
@@ -21,6 +22,12 @@ public abstract record Type
 	public record CString : Type;
 	
 	public record TypeIdentifier(Type Type) : Type;
+
+	public record TypeUniverse(int Level) : Type;
+	
+	public record Polymorphic(string From, Type TypeClass, Type To) : Type;
+	
+	public record Variable(string Name) : Type;
 
 	public static bool operator &(Type left, Type right)
 	{
@@ -49,5 +56,15 @@ public abstract record Type
 			Builtin { Value: Builtins.I64 } => right is IntLiteral,
 			_ => false
 		};
+	}
+
+	public static bool operator <(Type left, Type right)
+	{
+		return right is TypeUniverse && left is not TypeUniverse;
+	}
+
+	public static bool operator >(Type left, Type right)
+	{
+		return right < left;
 	}
 }

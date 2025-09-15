@@ -177,6 +177,35 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 				(false, _) => throw new TokenException($"Cannot compare values of non-numeric types {l}, {r}", binOp.Token)
 			};
 		}
+		if (binOp.Type == TokenTypes.DoubleTo)
+		{
+			if (binOp.Left is not Expression.Identifier id)
+				throw new TokenException("Polymorphism requires bindings", binOp.Token);
+			bindings = new Dictionary<IdValue, Type>(bindings)
+			{
+				[new IdValue(id.Name)] = new Type.Variable(id.Name)
+			};
+			return new Type.TypeIdentifier(new Type.Polymorphic(id.Name, Type.Types, Evaluate(binOp.Right, bindings)));
+		}
+
+		if (binOp.Type == TokenTypes.DoubleMapsTo)
+		{
+			switch (hint)
+			{
+				case null:
+					throw new NotImplementedException("TODO: make polymorphic inference work properly");
+				case Type.Polymorphic poly:
+					if (binOp.Left is not Expression.Identifier id)
+						throw new TokenException("Polymorphism requires bindings", binOp.Token);
+					var newBindings = new Dictionary<IdValue, Type>(bindings)
+					{
+						[new IdValue(id.Name)] = poly.TypeClass
+					};
+					return Evaluate(binOp.Right, newBindings, poly.To);
+				default:
+					throw new TokenException($"Expected a polymorphic type but got {hint} instead", binOp.Token);
+			}
+		}
 
 		throw new NotImplementedException($"Type checking not implemented for token at {binOp.Token.ErrorString}");
 	}
@@ -189,6 +218,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 		{
 			Type.Function f when f.From & arg => f.To,
 			Type.Function f => throw new TokenException($"Type {f} takes a {f.From}, but got a {arg}", app.Token),
+			Type.Polymorphic p when arg < p.TypeClass => Monomorphize(p.To, p.From, arg),
+			Type.Polymorphic p => throw new TokenException($"Type {arg} does not satisfy constraint {p.TypeClass} for polymorphic {p}", app.Token),
 			_ => throw new TokenException($"Type {fun} is not a function", app.Token)
 		};
 	}
@@ -254,6 +285,17 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 				return maybe;
 		}
 	}
+
+	private Type Monomorphize(Type type, string variable, Type value) => type switch
+	{
+		Type.Function(var from, var to) => new Type.Function(Monomorphize(from, variable, value), Monomorphize(to, variable, value)),
+		Type.Polymorphic(var from, var typeClass, var to) => new Type.Polymorphic(from, Monomorphize(typeClass, variable, value), Monomorphize(to, variable, value)),
+		Type.Product(var left, var right) => new Type.Product(Monomorphize(left, variable, value), Monomorphize(right, variable, value)),
+		Type.Sum(var left, var right) => new Type.Sum(Monomorphize(left, variable, value), Monomorphize(right, variable, value)),
+		Type.Variable variable1 when variable1.Name == variable => value,
+		Type.Builtin or Type.CString or Type.Enum or Type.TypeUniverse or Type.IntLiteral => type,
+		Type.Variable => type
+	};
 
 	private bool IsNumeric(Type type) => type & new Type.IntLiteral(0);
 }
