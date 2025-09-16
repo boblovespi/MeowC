@@ -9,6 +9,7 @@ public static class Program
 	public static Dictionary<string, TokenType> TokenMap { get; } = new();
 	public static ISet<string> Keywords { get; } = new HashSet<string>();
 	private static bool Errored { get; set; } = false;
+	private static List<string> Lines { get; set; }
 
 	public static void Main(string[] args)
 	{
@@ -50,6 +51,7 @@ public static class Program
 		var targetFile = new FileInfo(targetFileName);
 		using var reader = targetFile.OpenText();
 		var lines = reader.ReadToEnd();
+		Lines = lines.Split('\n').ToList();
 		var lexer = new Lexer(lines);
 		lexer.Parse();
 		// foreach (var token in lexer.Tokens) Console.WriteLine(token);
@@ -87,6 +89,7 @@ public static class Program
 		var targetFile = new FileInfo(targetFileName);
 		using var reader = targetFile.OpenText();
 		var lines = reader.ReadToEnd();
+		Lines = lines.Split('\n').ToList();
 		var lexer = new Lexer(lines);
 		lexer.Parse();
 		// foreach (var token in lexer.Tokens) Console.WriteLine(token);
@@ -119,12 +122,27 @@ public static class Program
 	{
 		Console.ForegroundColor = ConsoleColor.Red;
 		Console.Error.WriteLine($"[{line}:{column}] Error: {message}");
+		Console.Error.WriteLine(Lines[line - 1]);
+		Console.Error.WriteLine($"{new string(' ', column - 2)}^^^");
+		Console.ResetColor();
+		Errored = true;
+	}
+	
+	public static void Error(int line, int column, string message, Token token)
+	{
+		Console.ForegroundColor = ConsoleColor.Red;
+		Console.Error.WriteLine($"[{line}:{column}] Error: {message}");
+		Console.Error.WriteLine(Lines[line - 1]);
+		Console.Error.WriteLine($"{new string(' ', column - 1 - token.Data.Length)}{new string('^', token.Data.Length)}");
 		Console.ResetColor();
 		Errored = true;
 	}
 
 	public static void Error(CompileException exception)
 	{
-		Error(exception.Line, exception.Col, exception.Message);
+		if (exception is TokenException te)
+			Error(exception.Line, exception.Col, exception.Message, te.At);
+		else
+			Error(exception.Line, exception.Col, exception.Message);
 	}
 }
