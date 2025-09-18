@@ -58,13 +58,7 @@ public abstract record Type
 		};
 	}
 
-	public static bool operator <(Type left, Type right)
-	{
-		return right is TypeUniverse && left is not TypeUniverse;
-	}
+	public static bool operator <(Type left, Type right) => right is TypeUniverse && left is not TypeUniverse;
 
-	public static bool operator >(Type left, Type right)
-	{
-		return right < left;
-	}
+	public static bool operator >(Type left, Type right) => right < left;
 }

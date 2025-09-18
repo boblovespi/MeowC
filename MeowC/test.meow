@@ -37,8 +37,7 @@ let double: i32 -> i32 := n |-> []
     return n * 2;
 };
 
-// let error: u8 := foo * bar;
-
+let error: u8 := fooooo * bar;
 let const: 1 -> u8 := a |-> 'h';
 
 let add: i32 * i32 -> i32 := (x, y) |-> x + y;
@@ -71,4 +70,6 @@ let polytest: T => T -> i32 := T |=> t |-> 0;
 let id: T => T -> T := T |=> t |-> t;
 let id2: T => T -> T := T |=> t |-> id id t;
 let intid: i32 -> i32 := n |-> id n;
-let mistake: u32 := -1;
+// let mistake: u32 := -1;
+let foo: u8 := 'a';
+let bar: i32 := 1;

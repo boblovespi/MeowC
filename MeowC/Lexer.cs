@@ -1,12 +1,14 @@
-﻿namespace MeowC;
+﻿using MeowC.Diagnostics;
 
-public class Lexer(string lines)
+namespace MeowC;
+
+public class Lexer(CompilationUnit unit)
 {
 	private const string GreedySymbols = ":;=-,.+-*/|()[]{}<>";
 	private int Current { get; set; }
 	private int ColNum { get; set; }
 	private int LineNum { get; set; }
-	private string Lines { get; } = lines;
+	private string Lines { get; } = unit.Code;
 	public List<Token> Tokens { get; } = [];
 
 	/// <summary>
@@ -49,7 +51,9 @@ public class Lexer(string lines)
 				EatLiteral();
 			else
 			{
-				Program.Error(LineNum, ColNum, $"Unexpected character '{Peek}'.");
+				// Program.Error(LineNum, ColNum, $"Unexpected character '{Peek}'.");
+				unit.AddDiagnostic(
+					Diagnostic.SymbolError(unit, 2, LineNum, ColNum + 1, $"Unexpected character '{Peek}'."));
 				Advance();
 			}
 		}
@@ -72,10 +76,13 @@ public class Lexer(string lines)
 	{
 		Advance();
 		var start = Current;
-		while (Peek != '\'' && NotEOF) Advance();
-		if (EndOfFile)
+		while (Peek != '\'' && Peek != '\n' && NotEOF) Advance();
+		if (EndOfFile || Peek == '\n')
 		{
-			Program.Error(LineNum, ColNum, $"Unexpected end of character literal '{Lines.Substring(start, Current - start)}'.");
+			// Program.Error(LineNum, ColNum, $"Unexpected end of character literal '{Lines.Substring(start, Current - start)}'.");
+			unit.AddDiagnostic(
+				Diagnostic.SymbolError(unit, 1, LineNum, ColNum,
+					$"Unexpected end of character literal '{Lines.Substring(start, Current - start).TrimEnd()}'."));
 			return;
 		}
 
@@ -90,7 +97,9 @@ public class Lexer(string lines)
 		while (Peek != '"' && NotEOF) Advance();
 		if (EndOfFile)
 		{
-			Program.Error(LineNum, ColNum, $"Unexpected end of string '{Lines.Substring(start, Current - start)}'.");
+			unit.AddDiagnostic(
+				Diagnostic.SymbolError(unit, 1, LineNum, ColNum,
+					$"Unexpected end of string '{Lines.Substring(start, Current - start).TrimEnd()}'."));
 			return;
 		}
 
@@ -151,7 +160,10 @@ public class Lexer(string lines)
 
 	private void Advance()
 	{
-		if (Peek == '\0') Program.Error(LineNum, ColNum, "Reached end of file unexpectedly.");
+		if (Peek == '\0') 
+			// Program.Error(LineNum, ColNum, "Reached end of file unexpectedly.");
+			unit.AddDiagnostic(
+				Diagnostic.SymbolError(unit, 3, LineNum, ColNum, "Reached end of file unexpectedly."));
 		if (Peek == '\n')
 		{
 			LineNum++;

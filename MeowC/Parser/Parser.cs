@@ -1,9 +1,10 @@
-﻿using MeowC.Parser.Matches;
+﻿using MeowC.Diagnostics;
+using MeowC.Parser.Matches;
 using MeowC.Parser.Rules;
 
 namespace MeowC.Parser;
 
-public class Parser(List<Token> tokens)
+public class Parser(CompilationUnit unit, List<Token> tokens)
 {
 	private List<Token> Tokens { get; } = tokens;
 	public int CurrentIndex { get; set; } = 0;
@@ -18,8 +19,14 @@ public class Parser(List<Token> tokens)
 			}
 			catch (WrongTokenException wte)
 			{
-				Program.Error(wte);
+				unit.AddDiagnostic(Diagnostic.WrongTokenError(unit, wte));
 				Consume(wte.Actual);
+				while (Peek.Type != TokenTypes.EndOfFile && Peek.Type != TokenTypes.Keyword && Peek.Data != "let")
+					Consume(Peek.Type);
+			}
+			catch (ParseException pe)
+			{
+				// Program.AddDiagnostic(Diagnostic.Error(pe));
 			}
 	}
 
