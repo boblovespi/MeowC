@@ -53,7 +53,7 @@ public class Lexer(CompilationUnit unit)
 			{
 				// Program.Error(LineNum, ColNum, $"Unexpected character '{Peek}'.");
 				unit.AddDiagnostic(
-					Diagnostic.SymbolError(unit, 2, LineNum, ColNum + 1, $"Unexpected character '{Peek}'."));
+					Diagnostic.SymbolError(unit, 3, LineNum, ColNum + 1, $"Unexpected character '{Peek}'."));
 				Advance();
 			}
 		}
@@ -98,7 +98,7 @@ public class Lexer(CompilationUnit unit)
 		if (EndOfFile)
 		{
 			unit.AddDiagnostic(
-				Diagnostic.SymbolError(unit, 1, LineNum, ColNum,
+				Diagnostic.SymbolError(unit, 2, LineNum, ColNum,
 					$"Unexpected end of string '{Lines.Substring(start, Current - start).TrimEnd()}'."));
 			return;
 		}

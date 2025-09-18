@@ -4,12 +4,12 @@ namespace MeowC;
 
 public class CompilationUnit
 {
-	public string FileName { get; init; }
-	public string OutputPath { get; init; }
-	public string Code { get; init; }
-	public List<string> Lines { get; init; }
+	public string FileName { get; }
+	public string OutputPath { get; }
+	public string Code { get; }
+	public List<string> Lines { get; }
 	public bool Errored { get; private set; }
-	private readonly List<Diagnostic> diagnostics = new();
+	private readonly List<Diagnostic> diagnostics = [];
 	public IReadOnlyList<Diagnostic> Diagnostics => diagnostics;
 
 	public CompilationUnit(string inputFile, string outputFile = "")
@@ -22,6 +22,16 @@ public class CompilationUnit
 		Lines = lines.Split('\n').ToList();
 		OutputPath = outputFile == "" ? Path.GetFileNameWithoutExtension(FileName) : outputFile;
 	}
+	
+	private CompilationUnit(string code)
+	{
+		Code = code;
+		Lines = code.Split('\n').ToList();
+		FileName = "test.meow";
+		OutputPath = "test";
+	}
+
+	public static CompilationUnit TestFromCode(string code) => new(code);
 
 	public void AddDiagnostic(Diagnostic diagnostic)
 	{

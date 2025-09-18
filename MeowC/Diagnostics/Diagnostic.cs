@@ -7,8 +7,9 @@ public record Diagnostic(DiagLevel Level, DiagPhase Phase, int Code, Token? Toke
 	private static readonly Dictionary<(DiagPhase, int), string> DiagnosticNames = new()
 	{
 		{(DiagPhase.Lexer, 1), "Unmatched single quote"},
-		{(DiagPhase.Lexer, 2), "Unknown character"},
-		{(DiagPhase.Lexer, 3), "Unexpected end of file"},
+		{(DiagPhase.Lexer, 2), "Unmatched single quote"},
+		{(DiagPhase.Lexer, 3), "Unknown character"},
+		{(DiagPhase.Lexer, 4), "Unexpected end of file"},
 		{(DiagPhase.Parser, 101), "Unexpected token"}
 	};
 	public static Diagnostic SymbolError(CompilationUnit compilationUnit, int code, int line, int column, string message) =>
