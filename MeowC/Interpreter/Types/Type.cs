@@ -10,24 +10,24 @@ public abstract record Type
 	public record Enum(int Value) : Type;
 
 	public record Builtin(Builtins Value) : Type;
-	
+
 	public record IntLiteral(long Value) : Type;
-	
+
 	public record Function(Type From, Type To) : Type;
-	
+
 	public record Sum(Type Left, Type Right) : Type;
-	
+
 	public record Product(Type Left, Type Right) : Type;
 
 	public record CString : Type;
-	
+
 	public record TypeIdentifier(Type Type) : Type;
 
 	public record TypeUniverse(int Level) : Type;
-	
+
 	public record Polymorphic(string From, Type TypeClass, Type To) : Type;
-	
-	public record Variable(string Name) : Type;
+
+	public record Variable(string Name, Type TypeClass) : Type;
 
 	public static bool operator &(Type left, Type right)
 	{
@@ -37,7 +37,7 @@ public abstract record Type
 		if (left is Product lp && right is Product rp) return lp.Left & rp.Left && lp.Right & rp.Right;
 		return left switch
 		{
-			IntLiteral { Value: <= byte.MaxValue and >= byte.MinValue } => right is Builtin
+			IntLiteral { Value: <= sbyte.MaxValue and >= sbyte.MinValue } => right is Builtin
 			{
 				Value: >= Builtins.I8 and <= Builtins.I64
 			},
@@ -50,15 +50,41 @@ public abstract record Type
 				Value: >= Builtins.I32 and <= Builtins.I64
 			},
 			IntLiteral => right is Builtin { Value: Builtins.I64 },
-			Builtin { Value: Builtins.I8 } => right is IntLiteral { Value: <= byte.MaxValue and >= byte.MinValue },
+			Builtin { Value: Builtins.I8 } => right is IntLiteral { Value: <= sbyte.MaxValue and >= sbyte.MinValue },
 			Builtin { Value: Builtins.I16 } => right is IntLiteral { Value: <= short.MaxValue and >= short.MinValue },
 			Builtin { Value: Builtins.I32 } => right is IntLiteral { Value: <= int.MaxValue and >= int.MinValue },
 			Builtin { Value: Builtins.I64 } => right is IntLiteral,
+			Builtin { Value: Builtins.U8 } => right is IntLiteral { Value: <= byte.MaxValue and >= byte.MinValue },
+			Builtin { Value: Builtins.U16 } => right is IntLiteral { Value: <= ushort.MaxValue and >= ushort.MinValue },
+			Builtin { Value: Builtins.U32 } => right is IntLiteral { Value: <= uint.MaxValue and >= uint.MinValue },
+			Builtin { Value: Builtins.U64 } => right is IntLiteral,
 			_ => false
 		};
 	}
 
-	public static bool operator <(Type left, Type right) => right is TypeUniverse && left is not TypeUniverse;
+	public static bool operator <(Type left, Type right) => right is TypeUniverse && left switch
+	{
+		TypeIdentifier(var type) => type is not TypeUniverse,
+		Variable(_, var typeClass) => typeClass == right,
+		_ => false
+	};
 
 	public static bool operator >(Type left, Type right) => right < left;
+
+	public sealed override string? ToString() => this switch
+	{
+		Builtin builtin => builtin.Value.ToString().ToLowerInvariant(),
+		CString => "ConstString",
+		Enum { Value: 1 } => "unit",
+		Enum @enum => $"{@enum.Value}",
+		Function function => $"{function.From} -> {function.To}",
+		IntLiteral intLiteral => $"ConstInt[{intLiteral.Value}]",
+		Polymorphic polymorphic => $"'{polymorphic.From} : {polymorphic.TypeClass} => {polymorphic.To}",
+		Product product => $"{product.Left} * {product.Right}",
+		Sum sum => $"{sum.Left} + {sum.Right}",
+		TypeIdentifier typeIdentifier => $"val{typeIdentifier.Type}",
+		TypeUniverse typeUniverse => $"Type {typeUniverse.Level}",
+		Variable variable => $"'{variable.Name} : {variable.TypeClass}",
+		object t => t.ToString(),
+	};
 }

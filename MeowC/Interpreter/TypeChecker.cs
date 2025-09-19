@@ -1,16 +1,19 @@
-﻿using MeowC.Parser.Matches;
+﻿using MeowC.Diagnostics;
+using MeowC.Parser.Matches;
 using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Interpreter;
 
 public class TypeChecker
 {
-	public TypeChecker(List<Definition> definitions)
+	public TypeChecker(CompilationUnit unit, List<Definition> definitions)
 	{
+		Unit = unit;
 		Definitions = definitions;
 		Evaluator = new(TypeTable);
 	}
 
+	private CompilationUnit Unit { get; }
 	private List<Definition> Definitions { get; }
 	private TypeEvaluator Evaluator { get; }
 	private Dictionary<IdValue, Type> GlobalBindings { get; } = new();
@@ -27,9 +30,15 @@ public class TypeChecker
 				{
 					Type.TypeIdentifier => NormalizeTypes(type),
 					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
-					_ => throw new TokenException($"Type {type} for definition {definition.Id} ought to be a type identifier", definition.Val.Token)
+					_ => throw new TokenException(0, $"Type `{type}` for definition `{definition.Id}` ought to be a type identifier",
+						definition.Val.Token)
 				};
 				TypeTable[definition.Val] = GlobalBindings[new IdValue(definition.Id)];
+			}
+			catch (TokenException e)
+			{
+				Unit.AddDiagnostic(
+					Diagnostic.TypecheckError(Unit, e.Code, e.At, e.Message));
 			}
 			catch (CompileException e)
 			{
@@ -41,11 +50,26 @@ public class TypeChecker
 		{
 			try
 			{
-				Evaluator.Evaluate(definition.Val, new Dictionary<IdValue, Type>(GlobalBindings), GlobalBindings[new IdValue(definition.Id)]);
+				var expected = GlobalBindings[definition.Id];
+				var actual = Evaluator.Evaluate(definition.Val, new Dictionary<IdValue, Type>(GlobalBindings), expected);
+				if (!(expected & actual))
+				{
+					Unit.AddDiagnostic(
+						Diagnostic.TypecheckError(Unit, 201, definition.Val.Token, $"Expected type `{expected}` but got `{actual}`"));
+				}
+			}
+			catch (TokenException e)
+			{
+				Unit.AddDiagnostic(
+					Diagnostic.TypecheckError(Unit, e.Code, e.At, e.Message));
 			}
 			catch (CompileException e)
 			{
 				Program.Error(e);
+			}
+			catch (Exception e)
+			{
+				Console.Error.WriteLine(e);
 			}
 			// if (definition is { Val: Expression.Procedure procedure })
 				// CheckProcedure(procedure);
@@ -69,7 +93,7 @@ public class TypeChecker
 			Type.Builtin or Type.CString or Type.Enum or Type.TypeUniverse or Type.Variable => type,
 			Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
 			Type.Polymorphic(var from, var typeClass, var to) => new Type.Polymorphic(from, NormalizeTypes(typeClass), NormalizeTypes(to)),
-			_ => throw new Exception($"Type {type} for not fixable?")
+			_ => throw new Exception($"Type `{type}` for not fixable?")
 		};
 
 	private void CheckProcedure(Expression.Procedure procedure)

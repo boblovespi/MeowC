@@ -13,7 +13,17 @@ public static class Program
 
 	public static void Main(string[] args)
 	{
-		using (var reader = new StreamReader("tokendef"))
+		Bootstrap();
+
+		var app = ConsoleApp.Create();
+		app.Add("", Root);
+		app.Add("typecheck", Typecheck);
+		app.Run(args);
+	}
+
+	public static void Bootstrap(string dir = "")
+	{
+		using (var reader = new StreamReader(dir + "tokendef"))
 		{
 			while (!reader.EndOfStream)
 			{
@@ -23,7 +33,7 @@ public static class Program
 			}
 		}
 
-		using (var reader = new StreamReader("keyworddef"))
+		using (var reader = new StreamReader(dir + "keyworddef"))
 		{
 			while (!reader.EndOfStream)
 			{
@@ -31,11 +41,6 @@ public static class Program
 				Keywords.Add(line);
 			}
 		}
-
-		var app = ConsoleApp.Create();
-		app.Add("", Root);
-		app.Add("typecheck", Typecheck);
-		app.Run(args);
 	}
 
 	/// <summary>
@@ -56,7 +61,7 @@ public static class Program
 		parser.Parse();
 		//foreach (var def in parser.Definitions)
 		//	Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
-		var typer = new TypeChecker(parser.Definitions);
+		var typer = new TypeChecker(compUnit, parser.Definitions);
 		typer.Check();
 		if (compUnit.Errored)
 		{
@@ -89,7 +94,7 @@ public static class Program
 		parser.Parse();
 		//foreach (var def in parser.Definitions)
 		//	Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
-		var typer = new TypeChecker(parser.Definitions);
+		var typer = new TypeChecker(compUnit, parser.Definitions);
 		typer.Check();
 		PrintDiagnostics(compUnit);
 	}

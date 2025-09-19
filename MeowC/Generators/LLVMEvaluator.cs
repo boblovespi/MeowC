@@ -1,4 +1,5 @@
 ﻿using LLVMSharp.Interop;
+using MeowC.Diagnostics;
 using MeowC.Interpreter;
 using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
@@ -42,7 +43,7 @@ public class LLVMEvaluator(
 			var newName = id.Name + "_" + TypeTable[id];
 			var func = Module.GetNamedFunction(id.Name);
 			if (func.Handle == IntPtr.Zero)
-				throw new TokenException($"{id.Name} is undefined", id.Token);
+				throw new TokenException(0, $"{id.Name} is undefined", id.Token);
 			return func;
 		}
 

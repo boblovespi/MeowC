@@ -22,8 +22,8 @@ public class CompilationUnit
 		Lines = lines.Split('\n').ToList();
 		OutputPath = outputFile == "" ? Path.GetFileNameWithoutExtension(FileName) : outputFile;
 	}
-	
-	private CompilationUnit(string code)
+
+	private CompilationUnit(string code, bool unused)
 	{
 		Code = code;
 		Lines = code.Split('\n').ToList();
@@ -31,7 +31,7 @@ public class CompilationUnit
 		OutputPath = "test";
 	}
 
-	public static CompilationUnit TestFromCode(string code) => new(code);
+	public static CompilationUnit TestFromCode(string code) => new(code, false);
 
 	public void AddDiagnostic(Diagnostic diagnostic)
 	{

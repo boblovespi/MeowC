@@ -28,7 +28,7 @@ public class LexerTest
 		Assert.Single(unit.Diagnostics);
 		Assert.Equal(1, unit.Diagnostics[0].Code);
 	}
-	
+
 	[Fact]
 	public void LexerUnclosedDoubleQuote()
 	{

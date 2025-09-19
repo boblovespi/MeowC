@@ -1,4 +1,5 @@
-﻿using MeowC.Interpreter.Types;
+﻿using MeowC.Diagnostics;
+using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
 using Type = MeowC.Interpreter.Types.Type;
 
@@ -17,7 +18,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			Expression.Case @case => Cases(@case, bindings, hint),
 			Expression.Identifier id => Id(id, bindings),
 			Expression.Number num => new Type.IntLiteral(num.Value),
-			Expression.Prefix prefix => throw new NotImplementedException(),
+			Expression.Prefix prefix => Prefix(prefix, bindings, hint),
 			Expression.Procedure procedure => Procedure(procedure, bindings, hint),
 			Expression.String => Type.ConstString,
 			Expression.Unit => Type.Unit,
@@ -39,14 +40,14 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			{
 				case Case.Bool boolCase:
 					if (!(Evaluate(boolCase.Pattern, bindings, Type.Bool) & Type.Bool))
-						throw new TokenException($"Case patterns is not a boolean", boolCase.Pattern.Token);
+						throw new TokenException(230, $"Case patterns is not a boolean", boolCase.Pattern.Token);
 					if (!(Evaluate(boolCase.Value, bindings, hint) & hint))
-						throw new TokenException($"Expected case to be {hint}", boolCase.Value.Token);
+						throw new TokenException(231, $"Expected case to be `{hint}`", boolCase.Value.Token);
 					break;
 
 				case Case.Otherwise otherwiseCase:
 					if (Evaluate(otherwiseCase.Value, bindings, hint) & hint) break;
-					throw new TokenException($"Expected case to be {hint}", otherwiseCase.Value.Token);
+					throw new TokenException(231, $"Expected case to be `{hint}`", otherwiseCase.Value.Token);
 			}
 		}
 
@@ -70,7 +71,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			{
 				case null:
 					if (binOp.Left is not Expression.Identifier)
-						throw new TokenException("Functions require bindings", binOp.Token);
+						throw new TokenException(202, "Functions require bindings", binOp.Token);
 					return Evaluate(binOp.Right, bindings);
 				case Type.Function function:
 					var left = binOp.Left;
@@ -81,7 +82,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 						case Type.Product:
 							{
 								if (left is not Expression.Tuple tuple)
-									throw new TokenException("Functions require bindings", binOp.Token);
+									throw new TokenException(202, "Functions require bindings", binOp.Token);
 								var newBindings = new Dictionary<IdValue, Type>(bindings);
 								var right = function.From;
                                 // if (function.From is not Type.Product right)
@@ -90,32 +91,37 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 								{
                                     var value = tuple.Values[i];
                                     if (right is not Type.Product rr)
-										throw new TokenException($"Expected product type, got {function.From}", binOp.Token);
+										throw new TokenException(203, $"Expected product type, got `{function.From}`", binOp.Token);
 									right = rr.Right;
 									var pleft = rr.Left;
 									if (value is not Expression.Identifier id)
-										throw new TokenException($"Expected identifier for function, got {value}", value.Token);
+										throw new TokenException(203, $"Expected identifier for function, got `{value}`", value.Token);
 									newBindings[new IdValue(id.Name)] = pleft;
 								}
 								if (tuple.Values.Last() is not Expression.Identifier idL)
-									throw new TokenException($"Expected identifier for function, got {tuple.Values.Last()}", tuple.Values.Last().Token);
+									throw new TokenException(203, $"Expected identifier for function, got `{tuple.Values.Last()}`", tuple.Values.Last().Token);
 								newBindings[new IdValue(idL.Name)] = right;
-								return Evaluate(binOp.Right, newBindings, function.To);
+								var actual = Evaluate(binOp.Right, newBindings, function.To);
+								if (!(function.To & actual))
+									throw new TokenException(201, $"Expected function to return `{function.To}`, but got `{actual}` instead", binOp.Token);
+								return function;
 							}
 						default:
 							{
 								if (left is not Expression.Identifier bind)
-									throw new TokenException($"Functions require bindings", binOp.Token);
+									throw new TokenException(202, $"Functions require bindings", binOp.Token);
 								var newBindings = new Dictionary<IdValue, Type>(bindings)
 								{
 									[new IdValue(bind.Name)] = function.From
 								};
-								return Evaluate(binOp.Right, newBindings, function.To);
+								var actual = Evaluate(binOp.Right, newBindings, function.To);
+								if (!(function.To & actual))
+									throw new TokenException(201, $"Expected function to return `{function.To}`, but got `{actual}` instead", binOp.Token);
+								return function;
 							}
 					}
-					throw new Exception("shouldn't be reached");
 				default:
-					throw new TokenException($"Expected a function type but got {hint} instead", binOp.Token);
+					throw new TokenException(201, $"Expected a function type but got `{hint}` instead", binOp.Token);
 			}
 
 		if (binOp.Type == TokenTypes.Equals)
@@ -125,7 +131,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			return (l & r) switch
 			{
 				true => Type.Bool,
-				false => throw new TokenException($"Cannot compare values of different types {l}, {r}", binOp.Token)
+				false => throw new TokenException(201, $"Cannot compare values of different types `{l}`, `{r}`", binOp.Token)
 			};
 		}
 
@@ -138,8 +144,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new TokenException($"Cannot multiply values of different types {l}, {r}", binOp.Token),
-				(false, _) => throw new TokenException($"Cannot multiply values of non-numeric types {l}, {r}", binOp.Token)
+				(true, false) => throw new TokenException(201, $"Cannot multiply values of different types `{l}`, `{r}`", binOp.Token),
+				(false, _) => throw new TokenException(201, $"Cannot multiply values of non-numeric types `{l}`, `{r}`", binOp.Token)
 			};
 		}
 		if (binOp.Type == TokenTypes.Plus)
@@ -151,8 +157,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new TokenException($"Cannot add values of different types {l}, {r}", binOp.Token),
-				(false, _) => throw new TokenException($"Cannot add values of non-numeric types {l}, {r}", binOp.Token)
+				(true, false) => throw new TokenException(201, $"Cannot add values of different types `{l}`, `{r}`", binOp.Token),
+				(false, _) => throw new TokenException(201, $"Cannot add values of non-numeric types `{l}`, `{r}`", binOp.Token)
 			};
 		}
 		if (binOp.Type == TokenTypes.Slash || binOp.Type == TokenTypes.Minus)
@@ -162,8 +168,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
-				(true, false) => throw new TokenException($"Cannot subtract/divide values of different types {l}, {r}", binOp.Token),
-				(false, _) => throw new TokenException($"Cannot subtract/divide values of non-numeric types {l}, {r}", binOp.Token)
+				(true, false) => throw new TokenException(201, $"Cannot subtract/divide values of different types `{l}`, `{r}`", binOp.Token),
+				(false, _) => throw new TokenException(201, $"Cannot subtract/divide values of non-numeric types `{l}`, `{r}`", binOp.Token)
 			};
 		}
 		if (binOp.Type == TokenTypes.Less)
@@ -173,17 +179,17 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => Type.Bool,
-				(true, false) => throw new TokenException($"Cannot compare values of different types {l}, {r}", binOp.Token),
-				(false, _) => throw new TokenException($"Cannot compare values of non-numeric types {l}, {r}", binOp.Token)
+				(true, false) => throw new TokenException(201, $"Cannot compare values of different types `{l}`, `{r}`", binOp.Token),
+				(false, _) => throw new TokenException(201, $"Cannot compare values of non-numeric types `{l}`, `{r}`", binOp.Token)
 			};
 		}
 		if (binOp.Type == TokenTypes.DoubleTo)
 		{
 			if (binOp.Left is not Expression.Identifier id)
-				throw new TokenException("Polymorphism requires bindings", binOp.Token);
+				throw new TokenException(211, "Polymorphism requires bindings", binOp.Token);
 			bindings = new Dictionary<IdValue, Type>(bindings)
 			{
-				[new IdValue(id.Name)] = new Type.Variable(id.Name)
+				[new IdValue(id.Name)] = new Type.Variable(id.Name, Type.Types)
 			};
 			return new Type.TypeIdentifier(new Type.Polymorphic(id.Name, Type.Types, Evaluate(binOp.Right, bindings)));
 		}
@@ -196,14 +202,17 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 					throw new NotImplementedException("TODO: make polymorphic inference work properly");
 				case Type.Polymorphic poly:
 					if (binOp.Left is not Expression.Identifier id)
-						throw new TokenException("Polymorphism requires bindings", binOp.Token);
+						throw new TokenException(211, "Polymorphism requires bindings", binOp.Token);
 					var newBindings = new Dictionary<IdValue, Type>(bindings)
 					{
-						[new IdValue(id.Name)] = poly.TypeClass
+						[new IdValue(id.Name)] = new Type.Variable(id.Name, Type.Types)
 					};
-					return Evaluate(binOp.Right, newBindings, poly.To);
+					var actual = Evaluate(binOp.Right, newBindings, poly.To);
+					if (!(poly.To & actual))
+						throw new TokenException(201, $"Expected polymorphic type into `{poly.To}`, but got `{actual}` instead", binOp.Token);
+					return poly;
 				default:
-					throw new TokenException($"Expected a polymorphic type but got {hint} instead", binOp.Token);
+					throw new TokenException(201, $"Expected a polymorphic type but got `{hint}` instead", binOp.Token);
 			}
 		}
 
@@ -217,10 +226,11 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 		return fun switch
 		{
 			Type.Function f when f.From & arg => f.To,
-			Type.Function f => throw new TokenException($"Type {f} takes a {f.From}, but got a {arg}", app.Token),
-			Type.Polymorphic p when arg < p.TypeClass => Monomorphize(p.To, p.From, arg),
-			Type.Polymorphic p => throw new TokenException($"Type {arg} does not satisfy constraint {p.TypeClass} for polymorphic {p}", app.Token),
-			_ => throw new TokenException($"Type {fun} is not a function", app.Token)
+			Type.Function f => throw new TokenException(201, $"Type `{f}` takes a `{f.From}`, but got a `{arg}`", app.Token),
+			Type.Polymorphic p when arg < p.TypeClass && arg is Type.TypeIdentifier t => Monomorphize(p.To, p.From, t.Type),
+			Type.Polymorphic p when arg < p.TypeClass && arg is Type.Variable v => Monomorphize(p.To, p.From, v),
+			Type.Polymorphic p => throw new TokenException(210, $"Type `{arg}` does not satisfy constraint `{p.TypeClass}` for polymorphic `{p}`", app.Token),
+			_ => throw new TokenException(201, $"Type `{fun}` is not a function", app.Token)
 		};
 	}
 
@@ -260,10 +270,10 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 					{
 						var otherType = Evaluate(@return.Argument, bindings, hint);
 						if (!(type & otherType))
-							throw new TokenException($"Type {otherType} does not match {type}", @return.Argument.Token);
+							throw new TokenException(220, $"Type `{otherType}` does not match `{type}`", @return.Argument.Token);
 					}
 					if (hint != null && !(type & hint))
-						throw new TokenException($"Expected return of type {hint}, but got {type}", @return.Argument.Token);
+						throw new TokenException(221, $"Expected return of type `{hint}`, but got `{type}`", @return.Argument.Token);
 					break;
 				default:
 					throw new NotImplementedException(nameof(statement));
@@ -276,14 +286,30 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 	{
 		switch (identifier)
 		{
+			case { Name: "i8"}: return new Type.TypeIdentifier(new Type.Builtin(Builtins.I8));
 			case { Name: "i32" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.I32));
 			case { Name: "u8" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.U8));
 			case { Name: "proc" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
 			default:
 				var maybe = bindings.GetValueOrDefault(new IdValue(identifier.Name));
-				if (maybe == null) throw new TokenException($"No identifier found for {identifier.Name}", identifier.Token);
+				if (maybe == null) throw new TokenException(200, $"No identifier found called '{identifier.Name}'", identifier.Token);
 				return maybe;
 		}
+	}
+	
+	private Type Prefix(Expression.Prefix prefix, Dictionary<IdValue, Type> bindings, Type? hint = null)
+	{
+		if (prefix.Type == TokenTypes.Minus)
+		{
+			var expr = Evaluate(prefix.Expression, bindings);
+			if (expr is Type.IntLiteral literal)
+				return new Type.IntLiteral(-literal.Value);
+			if (IsNumeric(expr))
+				return expr;
+			throw new TokenException(201, $"Cannot negate non-numeric type `{prefix.Type}`", prefix.Token);
+		}
+		
+		throw new NotImplementedException($"Type checking not implemented for token at {prefix.Token.ErrorString}");
 	}
 
 	private Type Monomorphize(Type type, string variable, Type value) => type switch

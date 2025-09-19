@@ -68,8 +68,9 @@ let divByZero: i32 := {
 
 let polytest: T => T -> i32 := T |=> t |-> 0;
 let id: T => T -> T := T |=> t |-> t;
-let id2: T => T -> T := T |=> t |-> id id t;
-let intid: i32 -> i32 := n |-> id n;
-// let mistake: u32 := -1;
+let id2: T => T -> T := T |=> t |-> (id T) (id T) t;
+let intid: i32 -> i32 := n |-> (id i32) n;
+let mistake: u8 := -1;
 let foo: u8 := 'a';
-let bar: i32 := 1;
+let bar: i8 := "a" + "b";
+let applyLambda: i32 := (x |-> x + 10) 10;
