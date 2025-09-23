@@ -31,6 +31,17 @@ public class TypeCheckerTest(TypeCheckerTest.Fixture fixture) : IClassFixture<Ty
 	}
 
 	[Fact]
+	public void TypeCheckerHoleUnificationFailure()
+	{
+		var code = "let x: u8 := (y \\mt y + 1000) 10;";
+		var unit = CompilationUnit.TestFromCode(code);
+		RunFullCompilation(unit);
+
+		Assert.Contains(unit.Diagnostics, d => d.Code == 202);
+		Assert.Contains(unit.Diagnostics, d => d.Message.Contains("not unifiable"));
+	}
+
+	[Fact]
 	public void TypeCheckerInvalidFunctionParameter()
 	{
 		var code = "let f: (i32, i32) -> i32 := (x, 42) |-> x + 10;";
