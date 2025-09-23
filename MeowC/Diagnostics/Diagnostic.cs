@@ -22,6 +22,7 @@ public record Diagnostic(
 		{ (DiagPhase.Parser, 101), "Unexpected token" },
 		{ (DiagPhase.TypeChecker, 200), "Unknown identifier" },
 		{ (DiagPhase.TypeChecker, 201), "Type mismatch" },
+		{ (DiagPhase.TypeChecker, 202), "Could not unify types" },
 		{ (DiagPhase.TypeChecker, 203), "Invalid function parameter" },
 		{ (DiagPhase.TypeChecker, 210), "Polymorphic constraint not satisfied" },
 		{ (DiagPhase.TypeChecker, 211), "Polymorphic binding error" },

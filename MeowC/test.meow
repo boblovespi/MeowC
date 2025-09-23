@@ -73,4 +73,4 @@ let intid: i32 -> i32 := n |-> (id i32) n;
 let mistake: u8 := -1;
 let foo: u8 := 'a';
 let bar: i8 := "a" + "b";
-let applyLambda: i32 := (x |-> x + 10) 10;
+let applyLambda: i8 := (x |-> x + 10) 1000;

@@ -10,7 +10,7 @@ public class TypeChecker
 	{
 		Unit = unit;
 		Definitions = definitions;
-		Evaluator = new(TypeTable);
+		Evaluator = new(TypeTable, Constraints);
 	}
 
 	private CompilationUnit Unit { get; }
@@ -18,6 +18,7 @@ public class TypeChecker
 	private TypeEvaluator Evaluator { get; }
 	private Dictionary<IdValue, Type> GlobalBindings { get; } = new();
 	private bool Errored { get; set; } = false;
+	private Dictionary<Type.Hole, List<Constraint>> Constraints { get; } = new();
 	public Dictionary<Expression, Type> TypeTable { get; } = new();
 
 	public void Check()
@@ -55,6 +56,7 @@ public class TypeChecker
 			{
 				var expected = GlobalBindings[definition.Id];
 				var actual = Evaluator.Evaluate(definition.Val, new Dictionary<IdValue, Type>(GlobalBindings), expected);
+				Evaluator.AddUnificationConstraint(expected, actual);
 				if (!(expected & actual))
 				{
 					Unit.AddDiagnostic(
@@ -78,9 +80,49 @@ public class TypeChecker
 				Console.Error.WriteLine(e);
 			}
 			// if (definition is { Val: Expression.Procedure procedure })
-				// CheckProcedure(procedure);
+			// CheckProcedure(procedure);
 			// Console.WriteLine(GlobalBindings[new IdValue(definition.Id)]);
 		}
+
+		// Unify some stuff
+		foreach (var (hole, constraints) in Constraints)
+		{
+			Console.Out.WriteLine($"{hole}: {string.Join(", ", constraints)}");
+			Type? type = null;
+			foreach (var constraint in constraints)
+			{
+				switch (constraint)
+				{
+					case Constraint.Unification unification:
+						if (type == null)
+							type = unification.Type;
+						else if (type & unification.Type)
+						{
+							if (unification.Type.IsStricterType(type))
+								type = unification.Type;
+						}
+						else
+						{
+							Unit.AddDiagnostic(Diagnostic.TypecheckError(Unit, 202, hole.Token,
+								$"Could not unify {hole}: types `{type}` and `{unification.Type}` are not unifiable"));
+							Errored = true;
+						}
+
+						break;
+				}
+			}
+			if (type == null)
+			{
+				Unit.AddDiagnostic(Diagnostic.TypecheckError(Unit, 202, hole.Token,
+					$"Could not unify {hole}: got no concrete types to realize it with"));
+				Errored = true;
+			}
+			else
+			{
+				// TODO: fill in holes
+			}
+		}
+
 		if (!Errored)
 			Program.Info($"Successfully typechecked {Unit.FileName}");
 	}
@@ -118,6 +160,7 @@ public class TypeChecker
 				{
 					var value = Evaluator.Evaluate(callable.Argument, new Dictionary<IdValue, Type>(GlobalBindings));
 				}
+
 				break;
 		}
 	}

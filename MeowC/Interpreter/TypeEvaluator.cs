@@ -5,7 +5,7 @@ using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Interpreter;
 
-public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<Type>
+public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Type.Hole, List<Constraint>> constraints) : IEvaluator<Type>
 {
 	// private IEvaluator<Type> Me => this;
 
@@ -70,9 +70,15 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			switch (hint)
 			{
 				case null:
-					if (binOp.Left is not Expression.Identifier)
+					if (binOp.Left is not Expression.Identifier unknownBind)
 						throw new TokenException(202, "Functions require bindings", binOp.Token);
-					return Evaluate(binOp.Right, bindings);
+					var hole = new Type.Hole(unknownBind.Name, unknownBind.Token);
+					bindings = new Dictionary<IdValue, Type>(bindings)
+					{
+						[unknownBind.Name] = hole
+					};
+					var inferred = Evaluate(binOp.Right, bindings);
+					return new Type.Function(hole, inferred);
 				case Type.Function function:
 					var left = binOp.Left;
 					switch (function.From)
@@ -128,6 +134,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 		{
 			var l = Evaluate(binOp.Left, bindings);
 			var r = Evaluate(binOp.Right, bindings);
+			AddUnificationConstraint(l, r);
 			return (l & r) switch
 			{
 				true => Type.Bool,
@@ -141,6 +148,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			var r = Evaluate(binOp.Right, bindings);
 			if (l is Type.TypeIdentifier ll && r is Type.TypeIdentifier rr)
 				return new Type.TypeIdentifier(new Type.Product(ll.Type, rr.Type));
+			AddUnificationConstraint(l, r);
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
@@ -154,6 +162,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			var r = Evaluate(binOp.Right, bindings);
 			if (l is Type.TypeIdentifier ll && r is Type.TypeIdentifier rr)
 				return new Type.TypeIdentifier(new Type.Sum(ll.Type, rr.Type));
+			AddUnificationConstraint(l, r);
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
@@ -165,6 +174,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 		{
 			var l = Evaluate(binOp.Left, bindings);
 			var r = Evaluate(binOp.Right, bindings);
+			AddUnificationConstraint(l, r);
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => l,
@@ -176,6 +186,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 		{
 			var l = Evaluate(binOp.Left, bindings);
 			var r = Evaluate(binOp.Right, bindings);
+			AddUnificationConstraint(l, r);
 			return (IsNumeric(l) && IsNumeric(r), l & r) switch
 			{
 				(true, true) => Type.Bool,
@@ -223,6 +234,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 	{
 		var fun = Evaluate(app.Function, bindings);
 		var arg = Evaluate(app.Argument, bindings);
+		if (fun is Type.Function f1 && f1.From & arg)
+			AddUnificationConstraint(arg, f1.From);
 		return fun switch
 		{
 			Type.Function f when f.From & arg => f.To,
@@ -322,6 +335,22 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 		Type.Builtin or Type.CString or Type.Enum or Type.TypeUniverse or Type.IntLiteral => type,
 		Type.Variable => type
 	};
+	
+	public void AddUnificationConstraint(Type left, Type right)
+	{
+		if (left is Type.Hole hole)
+		{
+			if (!constraints.ContainsKey(hole))
+				constraints[hole] = [];
+			constraints[hole].Add(new Constraint.Unification(right));
+		}
+		else if (right is Type.Hole hole2)
+		{
+			if (!constraints.ContainsKey(hole2))
+				constraints[hole2] = [];
+			constraints[hole2].Add(new Constraint.Unification(left));
+		}
+	}
 
 	private bool IsNumeric(Type type) => type & new Type.IntLiteral(0);
 }
