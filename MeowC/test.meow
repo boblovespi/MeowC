@@ -45,7 +45,7 @@ let add: i32 * i32 -> i32 := (x, y) |-> x + y;
 let curryAdd: i32 -> i32 -> i32 := x \mt (y \mt x + y);
 
 let tuple: i32 * i32 * i32 := (1, 2, 3);
-let union: i32 + u8 := 1;
+let union: i32 + u8 := ((inl i32)u8)1;
 let unit: 1 := ();
 /*
 let num: i32 := 1 - 1 - 1;

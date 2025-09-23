@@ -23,6 +23,15 @@ public class TypeChecker
 		GlobalBindings["f32"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.F32));
 		GlobalBindings["f64"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.F64));
 		GlobalBindings["proc"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
+		GlobalBindings["Type"] = Type.Types;
+		GlobalBindings["inl"] = new Type.Polymorphic(
+			"T",
+			Type.Types,
+			new Type.Polymorphic("U",
+			Type.Types,
+			new Type.Function(
+				new Type.Variable("T", Type.Types),
+				new Type.Sum(new Type.Variable("T", Type.Types), new Type.Variable("U", Type.Types)))));
 	}
 
 	private CompilationUnit Unit { get; }

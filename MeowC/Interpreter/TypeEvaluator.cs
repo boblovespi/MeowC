@@ -323,7 +323,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Ty
 		Type.Sum(var left, var right) => new Type.Sum(Monomorphize(left, variable, value), Monomorphize(right, variable, value)),
 		Type.Variable variable1 when variable1.Name == variable => value,
 		Type.Builtin or Type.CString or Type.Enum or Type.TypeUniverse or Type.IntLiteral => type,
-		Type.Variable => type
+		Type.Variable => type,
+		_ => throw new NotImplementedException()
 	};
 	
 	public void AddUnificationConstraint(Type left, Type right)
