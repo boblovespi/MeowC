@@ -12,7 +12,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		{
 			Expression.Number number => number.Value,
 			Expression.String @string => @string.Value,
-			Expression.Identifier id => new IdValue(id.Name),
+			Expression.Identifier id => (IdValue)id.Name,
 			Expression.Application app => Apply(app, bindings),
 			Expression.BinaryOperator binOp => BinOp(binOp, bindings),
 			Expression.Case @case => Cases(@case, bindings),
@@ -46,7 +46,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			switch (left)
 			{
 				case Expression.Identifier bind:
-					var bindId = new IdValue(bind.Name);
+					var bindId = (IdValue)bind.Name;
 					return new Func<object, object>(x =>
 					{
 						var newBindings = new Dictionary<IdValue, object>(bindings)
@@ -66,7 +66,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 							var id = tuple.Values[i];
 							if (id is not Expression.Identifier idf)
 								throw new Exception("Functions require bindings!");
-							newBindings[new IdValue(idf.Name)] = xs[i];
+							newBindings[idf.Name] = xs[i];
 						}
 
 						return Evaluate(binOp.Right, newBindings);
@@ -139,13 +139,13 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		var oldBindings = bindings;
 		bindings = new Dictionary<IdValue, object>(bindings);
 		foreach (var definition in procedure.Definitions)
-			bindings[new IdValue(definition.Id)] = new object();
+			bindings[definition.Id] = new object();
 		foreach (var statement in procedure.Statements)
 		{
 			switch (statement)
 			{
 				case Statement.Assignment(var variable, var expression):
-					var var = new IdValue(variable);
+					var var = variable;
 					if (!bindings.ContainsKey(var)) throw new Exception($"Variable {variable} is not defined!");
 					bindings[var] = Evaluate(expression, bindings);
 					break;

@@ -97,7 +97,7 @@ public unsafe class LLVMGen(string targetFile)
 			var alloca = Builder.BuildAlloca(type, varName);
 			if (variable.Val is not null)
 				Builder.BuildStore(Evaluator.Evaluate(variable.Val, bindings), alloca);
-			bindings[new IdValue(variable.Id)] = alloca;
+			bindings[variable.Id] = alloca;
 		}
 
 		foreach (var statement in body.Statements)
@@ -105,7 +105,7 @@ public unsafe class LLVMGen(string targetFile)
 			switch (statement)
 			{
 				case Statement.Callable callable:
-					if (!bindings.TryGetValue(new IdValue(callable.Routine), out var func))
+					if (!bindings.TryGetValue(callable.Routine, out var func))
 					{
 						var typeStr = TypeTable[callable.Argument] switch
 						{
@@ -125,7 +125,7 @@ public unsafe class LLVMGen(string targetFile)
 
 				case Statement.Assignment assignment:
 					var val = Evaluator.Evaluate(assignment.Value, bindings);
-					Builder.BuildStore(val, bindings[new IdValue(assignment.Variable)]);
+					Builder.BuildStore(val, bindings[assignment.Variable]);
 					break;
 			}
 		}
@@ -141,7 +141,7 @@ public unsafe class LLVMGen(string targetFile)
 		switch (args)
 		{
 			case Expression.Identifier bind:
-				var bindId = new IdValue(bind.Name);
+				var bindId = (IdValue)bind.Name;
 				argCount = 1;
 				argNames.Add(bindId.Name);
 				break;
@@ -161,7 +161,7 @@ public unsafe class LLVMGen(string targetFile)
 		{
 			var param = function.GetParam((uint)i);
 			param.Name = argNames[i];
-			bindings[new IdValue(argNames[i])] = param;
+			bindings[argNames[i]] = param;
 		}
 
 		var bb = function.AppendBasicBlock("entry");
@@ -169,7 +169,7 @@ public unsafe class LLVMGen(string targetFile)
 		var ret = Evaluator.Evaluate(body, bindings);
 		Builder.BuildRet(ret);
 		function.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction);
-		NamedValues[new IdValue(functionName)] = function;
+		NamedValues[functionName] = function;
 		// function.ViewFunctionCFG();
 	}
 }

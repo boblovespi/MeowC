@@ -17,6 +17,7 @@ public class TypeChecker
 	private List<Definition> Definitions { get; }
 	private TypeEvaluator Evaluator { get; }
 	private Dictionary<IdValue, Type> GlobalBindings { get; } = new();
+	private bool Errored { get; set; } = false;
 	public Dictionary<Expression, Type> TypeTable { get; } = new();
 
 	public void Check()
@@ -26,23 +27,25 @@ public class TypeChecker
 			try
 			{
 				var type = Evaluator.Evaluate(definition.Type, new Dictionary<IdValue, Type>(GlobalBindings));
-				GlobalBindings[new IdValue(definition.Id)] = type switch
+				GlobalBindings[definition.Id] = type switch
 				{
 					Type.TypeIdentifier => NormalizeTypes(type),
 					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
 					_ => throw new TokenException(0, $"Type `{type}` for definition `{definition.Id}` ought to be a type identifier",
 						definition.Val.Token)
 				};
-				TypeTable[definition.Val] = GlobalBindings[new IdValue(definition.Id)];
+				TypeTable[definition.Val] = GlobalBindings[definition.Id];
 			}
 			catch (TokenException e)
 			{
 				Unit.AddDiagnostic(
 					Diagnostic.TypecheckError(Unit, e.Code, e.At, e.Message));
+				Errored = true;
 			}
 			catch (CompileException e)
 			{
 				Program.Error(e);
+				Errored = true;
 			}
 		}
 
@@ -56,16 +59,19 @@ public class TypeChecker
 				{
 					Unit.AddDiagnostic(
 						Diagnostic.TypecheckError(Unit, 201, definition.Val.Token, $"Expected type `{expected}` but got `{actual}`"));
+					Errored = true;
 				}
 			}
 			catch (TokenException e)
 			{
 				Unit.AddDiagnostic(
 					Diagnostic.TypecheckError(Unit, e.Code, e.At, e.Message));
+				Errored = true;
 			}
 			catch (CompileException e)
 			{
 				Program.Error(e);
+				Errored = true;
 			}
 			catch (Exception e)
 			{
@@ -75,6 +81,8 @@ public class TypeChecker
 				// CheckProcedure(procedure);
 			// Console.WriteLine(GlobalBindings[new IdValue(definition.Id)]);
 		}
+		if (!Errored)
+			Program.Info($"Successfully typechecked {Unit.FileName}");
 	}
 
 	/// <summary>

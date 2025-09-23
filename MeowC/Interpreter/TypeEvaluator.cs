@@ -96,11 +96,11 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 									var pleft = rr.Left;
 									if (value is not Expression.Identifier id)
 										throw new TokenException(203, $"Expected identifier for function, got `{value}`", value.Token);
-									newBindings[new IdValue(id.Name)] = pleft;
+									newBindings[id.Name] = pleft;
 								}
 								if (tuple.Values.Last() is not Expression.Identifier idL)
 									throw new TokenException(203, $"Expected identifier for function, got `{tuple.Values.Last()}`", tuple.Values.Last().Token);
-								newBindings[new IdValue(idL.Name)] = right;
+								newBindings[idL.Name] = right;
 								var actual = Evaluate(binOp.Right, newBindings, function.To);
 								if (!(function.To & actual))
 									throw new TokenException(201, $"Expected function to return `{function.To}`, but got `{actual}` instead", binOp.Token);
@@ -112,7 +112,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 									throw new TokenException(202, $"Functions require bindings", binOp.Token);
 								var newBindings = new Dictionary<IdValue, Type>(bindings)
 								{
-									[new IdValue(bind.Name)] = function.From
+									[bind.Name] = function.From
 								};
 								var actual = Evaluate(binOp.Right, newBindings, function.To);
 								if (!(function.To & actual))
@@ -189,7 +189,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 				throw new TokenException(211, "Polymorphism requires bindings", binOp.Token);
 			bindings = new Dictionary<IdValue, Type>(bindings)
 			{
-				[new IdValue(id.Name)] = new Type.Variable(id.Name, Type.Types)
+				[id.Name] = new Type.Variable(id.Name, Type.Types)
 			};
 			return new Type.TypeIdentifier(new Type.Polymorphic(id.Name, Type.Types, Evaluate(binOp.Right, bindings)));
 		}
@@ -205,7 +205,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 						throw new TokenException(211, "Polymorphism requires bindings", binOp.Token);
 					var newBindings = new Dictionary<IdValue, Type>(bindings)
 					{
-						[new IdValue(id.Name)] = new Type.Variable(id.Name, Type.Types)
+						[id.Name] = new Type.Variable(id.Name, Type.Types)
 					};
 					var actual = Evaluate(binOp.Right, newBindings, poly.To);
 					if (!(poly.To & actual))
@@ -248,14 +248,14 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 		var oldBindings = bindings;
 		bindings = new Dictionary<IdValue, Type>(bindings);
 		foreach (var definition in procedure.Definitions) 
-			bindings[new IdValue(definition.Id)] = TypeChecker.NormalizeTypes(Evaluate(definition.Type, oldBindings));
+			bindings[definition.Id] = TypeChecker.NormalizeTypes(Evaluate(definition.Type, oldBindings));
 		Type? type = null;
 		foreach (var statement in procedure.Statements)
 		{
 			switch (statement)
 			{
 				case Statement.Assignment assignment:
-					Evaluate(assignment.Value, bindings, bindings[new IdValue(assignment.Variable)]);
+					Evaluate(assignment.Value, bindings, bindings[assignment.Variable]);
 					break;
 				case Statement.Callable callable:
 					if (callable.Routine == "print")
@@ -291,7 +291,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable) : IEvaluator<
 			case { Name: "u8" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.U8));
 			case { Name: "proc" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
 			default:
-				var maybe = bindings.GetValueOrDefault(new IdValue(identifier.Name));
+				var maybe = bindings.GetValueOrDefault(identifier.Name);
 				if (maybe == null) throw new TokenException(200, $"No identifier found called '{identifier.Name}'", identifier.Token);
 				return maybe;
 		}

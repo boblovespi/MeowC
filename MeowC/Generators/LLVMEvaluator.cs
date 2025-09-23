@@ -38,7 +38,7 @@ public class LLVMEvaluator(
 
 	private LLVMValueRef Id(Expression.Identifier id, Dictionary<IdValue, LLVMValueRef> bindings)
 	{
-		if (!bindings.TryGetValue(new IdValue(id.Name), out var value))
+		if (!bindings.TryGetValue(id.Name, out var value))
 		{
 			var newName = id.Name + "_" + TypeTable[id];
 			var func = Module.GetNamedFunction(id.Name);
@@ -144,7 +144,7 @@ public class LLVMEvaluator(
 			var alloca = Builder.BuildAlloca(type, varName);
 			if (val is not null)
 				Builder.BuildStore(Evaluate(val, bindings), alloca);
-			bindings[new IdValue(varName)] = alloca;
+			bindings[varName] = alloca;
 		}
 
 		Builder.PositionAtEnd(oldBB);
@@ -156,7 +156,7 @@ public class LLVMEvaluator(
 			switch (statement)
 			{
 				case Statement.Callable(var routine, var expression):
-					if (!bindings.TryGetValue(new IdValue(routine), out var func))
+					if (!bindings.TryGetValue(routine, out var func))
 					{
 						var typeStr = TypeTable[expression] switch
 						{
@@ -176,7 +176,7 @@ public class LLVMEvaluator(
 
 				case Statement.Assignment(var variable, var expression):
 					var val = Evaluate(expression, bindings);
-					Builder.BuildStore(val, bindings[new IdValue(variable)]);
+					Builder.BuildStore(val, bindings[variable]);
 					break;
 				case Statement.Return(var expression):
 					builtRet = true;
