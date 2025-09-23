@@ -1,5 +1,4 @@
 ﻿using MeowC.Diagnostics;
-using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
 using Type = MeowC.Interpreter.Types.Type;
 
@@ -297,17 +296,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Ty
 
 	private Type Id(Expression.Identifier identifier, Dictionary<IdValue, Type> bindings)
 	{
-		switch (identifier)
-		{
-			case { Name: "i8"}: return new Type.TypeIdentifier(new Type.Builtin(Builtins.I8));
-			case { Name: "i32" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.I32));
-			case { Name: "u8" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.U8));
-			case { Name: "proc" }: return new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
-			default:
-				var maybe = bindings.GetValueOrDefault(identifier.Name);
-				if (maybe == null) throw new TokenException(200, $"No identifier found called '{identifier.Name}'", identifier.Token);
-				return maybe;
-		}
+		var maybe = bindings.GetValueOrDefault(identifier.Name);
+		return maybe ?? throw new TokenException(200, $"No identifier found called '{identifier.Name}'", identifier.Token);
 	}
 	
 	private Type Prefix(Expression.Prefix prefix, Dictionary<IdValue, Type> bindings, Type? hint = null)

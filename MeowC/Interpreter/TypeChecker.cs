@@ -1,4 +1,5 @@
 ﻿using MeowC.Diagnostics;
+using MeowC.Interpreter.Types;
 using MeowC.Parser.Matches;
 using Type = MeowC.Interpreter.Types.Type;
 
@@ -11,6 +12,17 @@ public class TypeChecker
 		Unit = unit;
 		Definitions = definitions;
 		Evaluator = new(TypeTable, Constraints);
+		GlobalBindings["i8"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.I8));
+		GlobalBindings["i16"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.I16));
+		GlobalBindings["i32"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.I32));
+		GlobalBindings["i64"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.I64));
+		GlobalBindings["u8"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.U8));
+		GlobalBindings["u16"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.U16));
+		GlobalBindings["u32"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.U32));
+		GlobalBindings["u64"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.U64));
+		GlobalBindings["f32"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.F32));
+		GlobalBindings["f64"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.F64));
+		GlobalBindings["proc"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
 	}
 
 	private CompilationUnit Unit { get; }

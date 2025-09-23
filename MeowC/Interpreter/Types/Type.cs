@@ -89,7 +89,7 @@ public abstract record Type
 		TypeUniverse typeUniverse => $"Type {typeUniverse.Level}",
 		Variable variable => $"'{variable.Name} : {variable.TypeClass}",
 		Hole hole => $"Hole[{hole.Name}]",
-		object t => "unknown!",
+		object t => $"unknown {t.GetType()}!",
 	};
 
 	public bool IsStricterType(Type other) => (this, other) switch
