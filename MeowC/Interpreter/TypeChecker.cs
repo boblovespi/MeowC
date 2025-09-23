@@ -109,17 +109,13 @@ public class TypeChecker
 						if (type == null)
 							type = unification.Type;
 						else if (type & unification.Type)
-						{
-							if (unification.Type.IsStricterType(type))
-								type = unification.Type;
-						}
+							type = unification.Type.GetStricterType(type);
 						else
 						{
 							Unit.AddDiagnostic(Diagnostic.TypecheckError(Unit, 202, hole.Token,
 								$"Could not unify {hole}: types `{type}` and `{unification.Type}` are not unifiable"));
 							Errored = true;
 						}
-
 						break;
 				}
 			}

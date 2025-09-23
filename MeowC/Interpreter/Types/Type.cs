@@ -38,31 +38,26 @@ public abstract record Type
 		if (left is TypeIdentifier lt && right is TypeIdentifier rt) return lt.Type & rt.Type;
 		if (left is Product lp && right is Product rp) return lp.Left & rp.Left && lp.Right & rp.Right;
 		if (left is Hole || right is Hole) return true;
-		return left switch
+		var builtin = left;
+		var il = right;
+		if (right is Builtin)
 		{
-			IntLiteral { Value: <= sbyte.MaxValue and >= sbyte.MinValue } => right is Builtin
+			builtin = right;
+			il = left;
+		}
+			
+		return builtin switch
 			{
-				Value: >= Builtins.I8 and <= Builtins.I64
-			},
-			IntLiteral { Value: <= short.MaxValue and >= short.MinValue } => right is Builtin
-			{
-				Value: >= Builtins.I16 and <= Builtins.I64
-			},
-			IntLiteral { Value: <= int.MaxValue and >= int.MinValue } => right is Builtin
-			{
-				Value: >= Builtins.I32 and <= Builtins.I64
-			},
-			IntLiteral => right is Builtin { Value: Builtins.I64 },
-			Builtin { Value: Builtins.I8 } => right is IntLiteral { Value: <= sbyte.MaxValue and >= sbyte.MinValue },
-			Builtin { Value: Builtins.I16 } => right is IntLiteral { Value: <= short.MaxValue and >= short.MinValue },
-			Builtin { Value: Builtins.I32 } => right is IntLiteral { Value: <= int.MaxValue and >= int.MinValue },
-			Builtin { Value: Builtins.I64 } => right is IntLiteral,
-			Builtin { Value: Builtins.U8 } => right is IntLiteral { Value: <= byte.MaxValue and >= byte.MinValue },
-			Builtin { Value: Builtins.U16 } => right is IntLiteral { Value: <= ushort.MaxValue and >= ushort.MinValue },
-			Builtin { Value: Builtins.U32 } => right is IntLiteral { Value: <= uint.MaxValue and >= uint.MinValue },
-			Builtin { Value: Builtins.U64 } => right is IntLiteral,
-			_ => false
-		};
+				Builtin { Value: Builtins.I8 } => il is IntLiteral { Value: <= sbyte.MaxValue and >= sbyte.MinValue },
+				Builtin { Value: Builtins.I16 } => il is IntLiteral { Value: <= short.MaxValue and >= short.MinValue },
+				Builtin { Value: Builtins.I32 } => il is IntLiteral { Value: <= int.MaxValue and >= int.MinValue },
+				Builtin { Value: Builtins.I64 } => il is IntLiteral,
+				Builtin { Value: Builtins.U8 } => il is IntLiteral { Value: <= byte.MaxValue and >= byte.MinValue },
+				Builtin { Value: Builtins.U16 } => il is IntLiteral { Value: <= ushort.MaxValue and >= ushort.MinValue },
+				Builtin { Value: Builtins.U32 } => il is IntLiteral { Value: <= uint.MaxValue and >= uint.MinValue },
+				Builtin { Value: Builtins.U64 } => il is IntLiteral,
+				_ => false
+			};
 	}
 
 	public static bool operator <(Type left, Type right) => right is TypeUniverse && left switch
@@ -97,5 +92,13 @@ public abstract record Type
 		(IntLiteral i1, IntLiteral i2) => Math.Abs(i1.Value) > Math.Abs(i2.Value),
 		(Builtin, IntLiteral) => this & other,
 		_ => false
+	};
+
+	public Type GetStricterType(Type other) => (this, other) switch
+	{
+		(IntLiteral i1, IntLiteral i2) when Math.Abs(i1.Value) > Math.Abs(i2.Value) => i1.Value < 0 ? i1 : i2.Value < 0 ? new IntLiteral(-i1.Value) : i1,
+		(IntLiteral i1, IntLiteral i2) => i1.Value < 0 ? i2.Value < 0 ? i2 : new IntLiteral(-i2.Value) : i2,
+		(Builtin, IntLiteral) => this,
+		_ => other
 	};
 }
