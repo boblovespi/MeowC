@@ -18,6 +18,7 @@ public static class Program
 		var app = ConsoleApp.Create();
 		app.Add("", Root);
 		app.Add("typecheck", Typecheck);
+		app.Add("run", Run);
 		app.Run(args);
 	}
 
@@ -69,14 +70,41 @@ public static class Program
 			return;
 		}
 
-		var interpreter = new Interpreter.Interpreter(parser.Definitions);
-		interpreter.Run();
+		// var interpreter = new Interpreter.Interpreter(parser.Definitions);
+		// interpreter.Run();
 		// var outputter = new AMD64Gen(parser.Definitions);
 		// using (var writer = new StreamWriter("./test.s"))
 		// 	writer.Write(outputter.Output());
 
-		var llvmGen = new LLVMGen(compUnit.OutputPath, parser.Definitions, typer.TypeTable);
+		var llvmGen = new LLVMGen(compUnit, parser.Definitions, typer.TypeTable);
 		llvmGen.Compile();
+	}
+
+	/// <summary>
+	/// Run a meow program, with the tree-walking interpreter
+	/// </summary>
+	/// <param name="targetFileName"></param>
+	public static void Run([Argument] string targetFileName)
+	{
+		Info($"Running file file {targetFileName}");
+		var compUnit = new CompilationUnit(targetFileName);
+		var lexer = new Lexer(compUnit);
+		lexer.Parse();
+		// foreach (var token in lexer.Tokens) Console.WriteLine(token);
+		var parser = new Parser.Parser(compUnit, lexer.Tokens);
+		parser.Parse();
+		//foreach (var def in parser.Definitions)
+		//	Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
+		var typer = new TypeChecker(compUnit, parser.Definitions);
+		typer.Check();
+		if (compUnit.Errored)
+		{
+			Console.WriteLine("something went wrong");
+			return;
+		}
+
+		var interpreter = new Interpreter.Interpreter(parser.Definitions);
+		interpreter.Run();
 	}
 
 	/// <summary>

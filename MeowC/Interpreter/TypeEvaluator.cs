@@ -274,6 +274,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Ty
 					{
 						var value = Evaluate(callable.Argument, bindings);
 					}
+					else
+						Evaluate(callable.Argument, bindings);
 					break;
 				case Statement.Return @return:
 					if (type == null)

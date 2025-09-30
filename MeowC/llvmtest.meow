@@ -39,6 +39,8 @@ let lotsAndLots: i32 -> i32 := n |-> {
     n + 1;      otherwise.
 };
 
+let longFunc: i64 -> i64 := n |-> n * 2000000;
+
 let main: 1 := [
     num: i32;
 ]
@@ -58,4 +60,5 @@ let main: 1 := [
     print "\nfib 10: ";
     print fib 10;
     print "\n";
+    longFunc 10;
 };

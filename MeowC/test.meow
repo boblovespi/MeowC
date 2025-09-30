@@ -74,3 +74,5 @@ let mistake: u8 := -1;
 let foo: u8 := 'a';
 let bar: i8 := "a" + "b";
 let applyLambda: u16 := (x |-> x + 10) 1000;
+
+let point: Type := record { x: i32; y: i32; };

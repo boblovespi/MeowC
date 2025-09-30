@@ -1,4 +1,5 @@
-﻿using LLVMSharp.Interop;
+﻿using System.Reflection.Metadata;
+using LLVMSharp.Interop;
 using MeowC.Diagnostics;
 using MeowC.Interpreter;
 using MeowC.Interpreter.Types;
@@ -52,7 +53,11 @@ public class LLVMEvaluator(
 
 	private LLVMValueRef Num(Expression.Number num, Dictionary<IdValue, LLVMValueRef> bindings)
 	{
-		return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, (ulong)num.Value);
+		var type = TypeTable[num];
+		// if (type is not Type.Builtin builtin)
+		// 	throw new Exception();
+		var llvmType = LLVMType(type);
+		return LLVMValueRef.CreateConstInt(llvmType, (ulong)num.Value);
 	}
 
 	public LLVMValueRef Cases(Expression.Case cases, Dictionary<IdValue, LLVMValueRef> bindings, LLVMValueRef hint = default)
@@ -217,6 +222,7 @@ public class LLVMEvaluator(
 			Type.CString cString => gen.PtrType,
 			Type.Enum @enum => LLVMTypeRef.Int8,
 			Type.TypeIdentifier typeId => LLVMType(typeId.Type),
+			Type.IntLiteral => LLVMTypeRef.Int32,
 			_ => throw new NotImplementedException(nameof(type))
 		};
 	}

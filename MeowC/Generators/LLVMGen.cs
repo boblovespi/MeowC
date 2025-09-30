@@ -6,19 +6,29 @@ using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Generators;
 
-public unsafe class LLVMGen(string targetFile)
+public unsafe class LLVMGen(CompilationUnit unit)
 {
 	public LLVMTypeRef PtrType { get; }
 	public LLVMTargetDataRef DataLayout { get; }
 
-	public LLVMGen(string targetFile, List<Definition> definitions, Dictionary<Expression, Type> typeTable) : this(targetFile)
+	public LLVMGen(CompilationUnit unit, List<Definition> definitions, Dictionary<Expression, Type> typeTable) : this(unit)
 	{
 		LLVM.InitializeNativeTarget();
 		LLVM.InitializeNativeAsmParser();
 		LLVM.InitializeNativeAsmPrinter();
 		var target = "x86_64-unknown-linux-gnu"; // LLVMTargetRef.DefaultTriple;
-		Target = LLVMTargetRef.GetTargetFromTriple(target).CreateTargetMachine(target,
+		try
+		{
+			Target = LLVMTargetRef.GetTargetFromTriple(target).CreateTargetMachine(target,
 			"generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelNone, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
+		}
+		catch
+		{
+			target = LLVMTargetRef.DefaultTriple;
+			Target = LLVMTargetRef.GetTargetFromTriple(target).CreateTargetMachine(target,
+			"generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelNone, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
+		}
+		Program.Info($"Compiling llvm for target `{target}`");
 		Definitions = definitions;
 		TypeTable = typeTable;
 		Context = LLVM.ContextCreate();
@@ -27,7 +37,7 @@ public unsafe class LLVMGen(string targetFile)
 		DataLayout = Target.CreateTargetDataLayout();
 		LLVM.SetModuleDataLayout(Module, DataLayout);
 		Evaluator = new(Context, Builder, Module, TypeTable, this);
-		PtrType = LLVMTypeRef.CreateIntPtr(DataLayout);
+		PtrType = LLVMTypeRef.CreatePointer(LLVMTypeRef.Int64, 0);
 	}
 
 	public LLVMTargetMachineRef Target { get; }
@@ -41,12 +51,13 @@ public unsafe class LLVMGen(string targetFile)
 
 	public void Compile()
 	{
-		Module.AddFunction("print:3i32_t", LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [LLVMTypeRef.Int32]));
+		var print_i32 = Module.AddFunction("print:3i32_t", LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [LLVMTypeRef.Int32]));
 		Module.AddFunction("print:3str_t", LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, [PtrType]));
+		// print_i32.FirstParam.AddAttributeAtIndex(LLVMAttributeIndex.LLVMAttributeFunctionIndex, LLVM.param)
 
 		foreach (var definition in Definitions)
 		{
-			Console.WriteLine(definition.Id);
+			Program.Info($"Compiling definition {definition.Id}");
 			if (definition is { Id: "main", Val: Expression.Procedure procedure })
 				GenMainDef("main", procedure);
 			else if (definition is { Val: Expression.BinaryOperator binop } && binop.Type == TokenTypes.MapsTo)
@@ -55,7 +66,7 @@ public unsafe class LLVMGen(string targetFile)
 
 		// Console.Write(Module.PrintToString());
 		// Module.Dump();
-		Module.PrintToFile($"{targetFile}.uoll");
+		Module.PrintToFile($"{unit.OutputPath}.uoll");
 		// Console.WriteLine();
 		// var fpm = Module.CreateFunctionPassManager();
 		// fpm.InitializeFunctionPassManager();
@@ -75,13 +86,13 @@ public unsafe class LLVMGen(string targetFile)
 		LLVM.DisposePassBuilderOptions(pbo);
 
 		// Module.Dump();
-		Module.PrintToFile($"{targetFile}.opll");
+		Module.PrintToFile($"{unit.OutputPath}.opll");
 		// Console.WriteLine();
 		var jit = Module.CreateMCJITCompiler();
 		// jit.TargetMachine.EmitToFile(Module, "out.a", LLVMCodeGenFileType.LLVMAssemblyFile);
-		Target.EmitToFile(Module, $"{targetFile}.o", LLVMCodeGenFileType.LLVMObjectFile);
-		Target.EmitToFile(Module, $"{targetFile}.s", LLVMCodeGenFileType.LLVMAssemblyFile);
-		Module.WriteBitcodeToFile($"{targetFile}.b");
+		Target.EmitToFile(Module, $"{unit.OutputPath}.o", LLVMCodeGenFileType.LLVMObjectFile);
+		Target.EmitToFile(Module, $"{unit.OutputPath}.s", LLVMCodeGenFileType.LLVMAssemblyFile);
+		Module.WriteBitcodeToFile($"{unit.OutputPath}.b");
 	}
 
 	private void GenMainDef(string name, Expression.Procedure body)

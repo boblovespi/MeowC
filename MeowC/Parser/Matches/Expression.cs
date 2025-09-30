@@ -30,4 +30,6 @@ public abstract record Expression(Token Token)
 	}
 
 	public record Application(Token Token, Expression Function, Expression Argument) : Expression(Token);
+
+	public record Record(Token Token, List<ProcedureDefinition> Fields) : Expression(Token);
 }

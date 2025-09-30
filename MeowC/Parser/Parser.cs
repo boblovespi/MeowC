@@ -24,10 +24,6 @@ public class Parser(CompilationUnit unit, List<Token> tokens)
 				while (Peek.Type != TokenTypes.EndOfFile && Peek.Type != TokenTypes.Keyword && Peek.Data != "let")
 					Consume(Peek.Type);
 			}
-			catch (ParseException pe)
-			{
-				// Program.AddDiagnostic(Diagnostic.Error(pe));
-			}
 	}
 
 	internal Definition ParseDefinition() => Rules.Rules.Definition.Parse(this);
@@ -46,7 +42,13 @@ public class Parser(CompilationUnit unit, List<Token> tokens)
 	internal Expression ParseExpression(Priorities priority)
 	{
 		var token = Peek;
-		if (!Rules.Rules.Prefixes.TryGetValue(token.Type, out var prefixRule)) throw new ParseException(token);
+		PrefixExpressionRule prefixRule;
+		if (token.Type == TokenTypes.Keyword)
+		{
+			if (!Rules.Rules.KeywordPrefixes.TryGetValue(token.Data, out prefixRule!)) throw new ParseException(token);
+		}
+		else
+			if (!Rules.Rules.Prefixes.TryGetValue(token.Type, out prefixRule!)) throw new ParseException(token);
 		Consume(token.Type);
 		var left = prefixRule.Parse(this, token);
 		// Console.WriteLine($"infix peek: {Peek}");
@@ -64,7 +66,7 @@ public class Parser(CompilationUnit unit, List<Token> tokens)
 
 		return left;
 	}
-	
+
 	internal ProcedureDefinition ParseProcedureDefinition() => Rules.Rules.ProcedureDefinition.Parse(this);
 
 	private bool HasRule(Priorities priority, Token token, out InfixExpressionRule? infixRule,

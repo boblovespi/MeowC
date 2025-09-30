@@ -19,6 +19,8 @@ public static class Rules
 	public static readonly ProcedureExpressionRule ProcedureExpression = new();
 	public static readonly CasesExpressionRule CasesExpression = new();
 
+	public static readonly RecordExpressionRule RecordExpression = new();
+
 	public static readonly BinaryOperatorExpressionRule PolymorphismDefinitionExpression = new(Priorities.PolymorphismFormation, false);
 	public static readonly BinaryOperatorExpressionRule FunctionDefinitionExpression = new(Priorities.FunctionFormation, false);
 	
@@ -45,6 +47,11 @@ public static class Rules
 		{ TokenTypes.LParen, ParensExpression },
 		{ TokenTypes.LBrack, ProcedureExpression },
 		{ TokenTypes.LBrace, CasesExpression },
+	};
+
+	public static readonly IReadOnlyDictionary<string, PrefixExpressionRule> KeywordPrefixes = new Dictionary<string, PrefixExpressionRule>()
+	{
+		{ "record", RecordExpression },
 	};
 
 	public static readonly IReadOnlyDictionary<TokenType, InfixExpressionRule> Infixes = new Dictionary<TokenType, InfixExpressionRule>
