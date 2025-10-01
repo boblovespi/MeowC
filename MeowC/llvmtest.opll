@@ -1,0 +1,181 @@
+; ModuleID = 'meowc'
+source_filename = "meowc"
+target datalayout = "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-n32:64-S128-Fn32"
+
+@"num:" = private unnamed_addr constant [6 x i8] c"num: \00", align 1
+@"\0Afoo" = private unnamed_addr constant [11 x i8] c"\0Afoo num: \00", align 1
+@"\0Abar" = private unnamed_addr constant [15 x i8] c"\0Abar foo num: \00", align 1
+@"fac " = private unnamed_addr constant [9 x i8] c"fac 10: \00", align 1
+@"\0Afib" = private unnamed_addr constant [10 x i8] c"\0Afib 10: \00", align 1
+@"\0A.1" = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+
+declare void @"print:3i32_t"(i32)
+
+declare void @"print:3str_t"(ptr)
+
+define i32 @foo(i32 %x) {
+entry:
+  %multemp = mul i32 %x, %x
+  %addtemp1 = add i32 %x, 30
+  %addtemp2 = add i32 %addtemp1, %multemp
+  ret i32 %addtemp2
+}
+
+define i32 @bar(i32 %y) {
+entry:
+  %calltemp = tail call i32 @foo(i32 %y)
+  %addtemp = add i32 %y, 1
+  %calltemp1 = tail call i32 @foo(i32 %addtemp)
+  %addtemp2 = add i32 %calltemp1, %calltemp
+  ret i32 %addtemp2
+}
+
+define i32 @fac(i32 %n) {
+entry:
+  br label %tailrecurse
+
+tailrecurse:                                      ; preds = %otherwise, %entry
+  %accumulator.tr = phi i32 [ 1, %entry ], [ %multemp, %otherwise ]
+  %n.tr = phi i32 [ %n, %entry ], [ %subtemp, %otherwise ]
+  %eqtemp = icmp eq i32 %n.tr, 0
+  br i1 %eqtemp, label %finally, label %otherwise
+
+finally:                                          ; preds = %tailrecurse
+  %accumulator.ret.tr = mul i32 %accumulator.tr, 1
+  ret i32 %accumulator.ret.tr
+
+otherwise:                                        ; preds = %tailrecurse
+  %subtemp = sub i32 %n.tr, 1
+  %multemp = mul i32 %accumulator.tr, %n.tr
+  br label %tailrecurse
+}
+
+define i32 @fib(i32 %n) {
+entry:
+  br label %tailrecurse
+
+tailrecurse:                                      ; preds = %otherwise, %entry
+  %accumulator.tr = phi i32 [ 0, %entry ], [ %addtemp, %otherwise ]
+  %n.tr = phi i32 [ %n, %entry ], [ %subtemp4, %otherwise ]
+  switch i32 %n.tr, label %otherwise [
+    i32 0, label %finally
+    i32 1, label %ifcase2
+  ]
+
+finally:                                          ; preds = %tailrecurse, %ifcase2
+  %casetemp = phi i32 [ 1, %ifcase2 ], [ 0, %tailrecurse ]
+  %accumulator.ret.tr = add i32 %accumulator.tr, %casetemp
+  ret i32 %accumulator.ret.tr
+
+ifcase2:                                          ; preds = %tailrecurse
+  br label %finally
+
+otherwise:                                        ; preds = %tailrecurse
+  %subtemp = sub i32 %n.tr, 1
+  %calltemp = tail call i32 @fib(i32 %subtemp)
+  %subtemp4 = sub i32 %n.tr, 2
+  %addtemp = add i32 %accumulator.tr, %calltemp
+  br label %tailrecurse
+}
+
+define i32 @procBased(i32 %n) {
+entry:
+  %multemp = mul i32 %n, %n
+  %addtemp = add i32 %multemp, 1
+  %multemp2 = mul i32 %addtemp, %n
+  %addtemp3 = add i32 %multemp2, 2
+  ret i32 %addtemp3
+}
+
+define i32 @test(i32 %n) {
+entry:
+  br label %tailrecurse
+
+tailrecurse:                                      ; preds = %otherwise, %entry
+  %accumulator.tr = phi i32 [ 0, %entry ], [ %addtemp1, %otherwise ]
+  %n.tr = phi i32 [ %n, %entry ], [ %subtemp, %otherwise ]
+  %eqtemp = icmp eq i32 %n.tr, 0
+  br i1 %eqtemp, label %finally, label %otherwise
+
+finally:                                          ; preds = %tailrecurse
+  %accumulator.ret.tr = add i32 1, %accumulator.tr
+  ret i32 %accumulator.ret.tr
+
+otherwise:                                        ; preds = %tailrecurse
+  %multemp = mul i32 %n.tr, %n.tr
+  %addtemp = add i32 %multemp, %n.tr
+  %subtemp = sub i32 %n.tr, 1
+  %addtemp1 = add i32 %addtemp, %accumulator.tr
+  br label %tailrecurse
+}
+
+define i32 @lotsAndLots(i32 %n) {
+entry:
+  switch i32 %n, label %ifnot17 [
+    i32 0, label %finally
+    i32 1, label %ifcase2
+    i32 2, label %ifcase5
+    i32 3, label %ifcase8
+    i32 100, label %ifcase13
+    i32 1000, label %ifcase16
+  ]
+
+finally:                                          ; preds = %entry, %otherwise, %ifcase19, %ifcase16, %ifcase13, %ifcase8, %ifcase5, %ifcase2
+  %casetemp = phi i32 [ -9, %ifcase2 ], [ 4, %ifcase5 ], [ 27, %ifcase8 ], [ 110, %ifcase13 ], [ 1100, %ifcase16 ], [ %addtemp21, %ifcase19 ], [ %addtemp22, %otherwise ], [ 0, %entry ]
+  ret i32 %casetemp
+
+ifcase2:                                          ; preds = %entry
+  br label %finally
+
+ifcase5:                                          ; preds = %entry
+  br label %finally
+
+ifcase8:                                          ; preds = %entry
+  br label %finally
+
+ifcase13:                                         ; preds = %entry
+  br label %finally
+
+ifcase16:                                         ; preds = %entry
+  br label %finally
+
+ifnot17:                                          ; preds = %entry
+  %lesstemp = icmp slt i32 %n, 0
+  br i1 %lesstemp, label %ifcase19, label %otherwise
+
+ifcase19:                                         ; preds = %ifnot17
+  %addtemp21 = add i32 %n, 12
+  br label %finally
+
+otherwise:                                        ; preds = %ifnot17
+  %addtemp22 = add i32 %n, 1
+  br label %finally
+}
+
+define i32 @longFunc(i32 %n) {
+entry:
+  %multemp = mul i32 %n, 2000000
+  ret i32 %multemp
+}
+
+define void @main() {
+entry:
+  tail call void @"print:3str_t"(ptr @"num:")
+  tail call void @"print:3i32_t"(i32 10)
+  %calltemp = tail call i32 @foo(i32 10)
+  tail call void @"print:3str_t"(ptr @"\0Afoo")
+  tail call void @"print:3i32_t"(i32 %calltemp)
+  %calltemp4 = tail call i32 @bar(i32 %calltemp)
+  tail call void @"print:3str_t"(ptr @"\0Abar")
+  tail call void @"print:3i32_t"(i32 %calltemp4)
+  tail call void @"print:3str_t"(ptr @"\0A.1")
+  tail call void @"print:3str_t"(ptr @"fac ")
+  %calltemp6 = tail call i32 @fac(i32 10)
+  tail call void @"print:3i32_t"(i32 %calltemp6)
+  tail call void @"print:3str_t"(ptr @"\0Afib")
+  %calltemp7 = tail call i32 @fib(i32 10)
+  tail call void @"print:3i32_t"(i32 %calltemp7)
+  tail call void @"print:3str_t"(ptr @"\0A.1")
+  tail call void @longFunc(i32 10)
+  ret void
+}

@@ -1,0 +1,233 @@
+; ModuleID = 'meowc'
+source_filename = "meowc"
+target datalayout = "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-n32:64-S128-Fn32"
+
+@"num:" = private unnamed_addr constant [6 x i8] c"num: \00", align 1
+@"\0Afoo" = private unnamed_addr constant [11 x i8] c"\0Afoo num: \00", align 1
+@"\0Abar" = private unnamed_addr constant [15 x i8] c"\0Abar foo num: \00", align 1
+@"\0A" = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+@"fac " = private unnamed_addr constant [9 x i8] c"fac 10: \00", align 1
+@"\0Afib" = private unnamed_addr constant [10 x i8] c"\0Afib 10: \00", align 1
+@"\0A.1" = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+
+declare void @"print:3i32_t"(i32)
+
+declare void @"print:3str_t"(ptr)
+
+define i32 @foo(i32 %x) {
+entry:
+  %multemp = mul i32 %x, %x
+  %addtemp = add i32 %multemp, %x
+  %addtemp1 = add i32 %addtemp, 10
+  %addtemp2 = add i32 %addtemp1, 20
+  ret i32 %addtemp2
+}
+
+define i32 @bar(i32 %y) {
+entry:
+  %calltemp = call i32 @foo(i32 %y)
+  %addtemp = add i32 %y, 1
+  %calltemp1 = call i32 @foo(i32 %addtemp)
+  %addtemp2 = add i32 %calltemp, %calltemp1
+  ret i32 %addtemp2
+}
+
+define i32 @fac(i32 %n) {
+entry:
+  %eqtemp = icmp eq i32 %n, 0
+  br i1 %eqtemp, label %ifcase, label %ifnot
+
+finally:                                          ; preds = %otherwise, %ifcase
+  %casetemp = phi i32 [ 1, %ifcase ], [ %multemp, %otherwise ]
+  ret i32 %casetemp
+
+ifcase:                                           ; preds = %entry
+  br label %finally
+
+ifnot:                                            ; preds = %entry
+  br label %otherwise
+
+otherwise:                                        ; preds = %ifnot
+  %subtemp = sub i32 %n, 1
+  %calltemp = call i32 @fac(i32 %subtemp)
+  %multemp = mul i32 %n, %calltemp
+  br label %finally
+}
+
+define i32 @fib(i32 %n) {
+entry:
+  %eqtemp = icmp eq i32 %n, 0
+  br i1 %eqtemp, label %ifcase, label %ifnot
+
+finally:                                          ; preds = %otherwise, %ifcase2, %ifcase
+  %casetemp = phi i32 [ 0, %ifcase ], [ 1, %ifcase2 ], [ %addtemp, %otherwise ]
+  ret i32 %casetemp
+
+ifcase:                                           ; preds = %entry
+  br label %finally
+
+ifnot:                                            ; preds = %entry
+  %eqtemp1 = icmp eq i32 %n, 1
+  br i1 %eqtemp1, label %ifcase2, label %ifnot3
+
+ifcase2:                                          ; preds = %ifnot
+  br label %finally
+
+ifnot3:                                           ; preds = %ifnot
+  br label %otherwise
+
+otherwise:                                        ; preds = %ifnot3
+  %subtemp = sub i32 %n, 1
+  %calltemp = call i32 @fib(i32 %subtemp)
+  %subtemp4 = sub i32 %n, 2
+  %calltemp5 = call i32 @fib(i32 %subtemp4)
+  %addtemp = add i32 %calltemp, %calltemp5
+  br label %finally
+}
+
+define i32 @procBased(i32 %n) {
+entry:
+  %m = alloca i32, align 4
+  store i32 %n, ptr %m, align 4
+  %loadtmp = load i32, ptr %m, align 4
+  %multemp = mul i32 %loadtmp, %n
+  %addtemp = add i32 %multemp, 1
+  store i32 %addtemp, ptr %m, align 4
+  %loadtmp1 = load i32, ptr %m, align 4
+  %multemp2 = mul i32 %n, %loadtmp1
+  %addtemp3 = add i32 %multemp2, 2
+  ret i32 %addtemp3
+}
+
+define i32 @test(i32 %n) {
+entry:
+  %m = alloca i32, align 4
+  %eqtemp = icmp eq i32 %n, 0
+  br i1 %eqtemp, label %ifcase, label %ifnot
+
+finally:                                          ; preds = %otherwise, %ifcase
+  %casetemp = phi i32 [ 1, %ifcase ], [ %addtemp1, %otherwise ]
+  ret i32 %casetemp
+
+ifcase:                                           ; preds = %entry
+  br label %finally
+
+ifnot:                                            ; preds = %entry
+  br label %otherwise
+
+otherwise:                                        ; preds = %ifnot
+  %multemp = mul i32 %n, %n
+  store i32 %multemp, ptr %m, align 4
+  %loadtmp = load i32, ptr %m, align 4
+  %addtemp = add i32 %loadtmp, %n
+  %subtemp = sub i32 %n, 1
+  %calltemp = call i32 @test(i32 %subtemp)
+  %addtemp1 = add i32 %addtemp, %calltemp
+  br label %finally
+}
+
+define i32 @lotsAndLots(i32 %n) {
+entry:
+  %eqtemp = icmp eq i32 %n, 0
+  br i1 %eqtemp, label %ifcase, label %ifnot
+
+finally:                                          ; preds = %otherwise, %ifcase19, %ifcase16, %ifcase13, %ifcase8, %ifcase5, %ifcase2, %ifcase
+  %casetemp = phi i32 [ %n, %ifcase ], [ %subtemp, %ifcase2 ], [ %multemp, %ifcase5 ], [ %multemp11, %ifcase8 ], [ %addtemp, %ifcase13 ], [ %addtemp18, %ifcase16 ], [ %addtemp21, %ifcase19 ], [ %addtemp22, %otherwise ]
+  ret i32 %casetemp
+
+ifcase:                                           ; preds = %entry
+  br label %finally
+
+ifnot:                                            ; preds = %entry
+  %eqtemp1 = icmp eq i32 %n, 1
+  br i1 %eqtemp1, label %ifcase2, label %ifnot3
+
+ifcase2:                                          ; preds = %ifnot
+  %subtemp = sub i32 %n, 10
+  br label %finally
+
+ifnot3:                                           ; preds = %ifnot
+  %eqtemp4 = icmp eq i32 %n, 2
+  br i1 %eqtemp4, label %ifcase5, label %ifnot6
+
+ifcase5:                                          ; preds = %ifnot3
+  %multemp = mul i32 %n, %n
+  br label %finally
+
+ifnot6:                                           ; preds = %ifnot3
+  %eqtemp7 = icmp eq i32 %n, 3
+  br i1 %eqtemp7, label %ifcase8, label %ifnot9
+
+ifcase8:                                          ; preds = %ifnot6
+  %multemp10 = mul i32 %n, %n
+  %multemp11 = mul i32 %multemp10, %n
+  br label %finally
+
+ifnot9:                                           ; preds = %ifnot6
+  %eqtemp12 = icmp eq i32 %n, 100
+  br i1 %eqtemp12, label %ifcase13, label %ifnot14
+
+ifcase13:                                         ; preds = %ifnot9
+  %addtemp = add i32 %n, 10
+  br label %finally
+
+ifnot14:                                          ; preds = %ifnot9
+  %eqtemp15 = icmp eq i32 %n, 1000
+  br i1 %eqtemp15, label %ifcase16, label %ifnot17
+
+ifcase16:                                         ; preds = %ifnot14
+  %addtemp18 = add i32 %n, 100
+  br label %finally
+
+ifnot17:                                          ; preds = %ifnot14
+  %lesstemp = icmp slt i32 %n, 0
+  br i1 %lesstemp, label %ifcase19, label %ifnot20
+
+ifcase19:                                         ; preds = %ifnot17
+  %addtemp21 = add i32 %n, 12
+  br label %finally
+
+ifnot20:                                          ; preds = %ifnot17
+  br label %otherwise
+
+otherwise:                                        ; preds = %ifnot20
+  %addtemp22 = add i32 %n, 1
+  br label %finally
+}
+
+define i32 @longFunc(i32 %n) {
+entry:
+  %multemp = mul i32 %n, 2000000
+  ret i32 %multemp
+}
+
+define void @main() {
+entry:
+  %num = alloca i32, align 4
+  store i32 10, ptr %num, align 4
+  call void @"print:3str_t"(ptr @"num:")
+  %loadtmp = load i32, ptr %num, align 4
+  call void @"print:3i32_t"(i32 %loadtmp)
+  %loadtmp1 = load i32, ptr %num, align 4
+  %calltemp = call i32 @foo(i32 %loadtmp1)
+  store i32 %calltemp, ptr %num, align 4
+  call void @"print:3str_t"(ptr @"\0Afoo")
+  %loadtmp2 = load i32, ptr %num, align 4
+  call void @"print:3i32_t"(i32 %loadtmp2)
+  %loadtmp3 = load i32, ptr %num, align 4
+  %calltemp4 = call i32 @bar(i32 %loadtmp3)
+  store i32 %calltemp4, ptr %num, align 4
+  call void @"print:3str_t"(ptr @"\0Abar")
+  %loadtmp5 = load i32, ptr %num, align 4
+  call void @"print:3i32_t"(i32 %loadtmp5)
+  call void @"print:3str_t"(ptr @"\0A")
+  call void @"print:3str_t"(ptr @"fac ")
+  %calltemp6 = call i32 @fac(i32 10)
+  call void @"print:3i32_t"(i32 %calltemp6)
+  call void @"print:3str_t"(ptr @"\0Afib")
+  %calltemp7 = call i32 @fib(i32 10)
+  call void @"print:3i32_t"(i32 %calltemp7)
+  call void @"print:3str_t"(ptr @"\0A.1")
+  call void @longFunc(i32 10)
+  ret void
+}
