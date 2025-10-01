@@ -143,7 +143,7 @@ public class Lexer(CompilationUnit unit)
 			if (start >= end) return;
 			if (Program.TokenMap.ContainsKey(symbols[start..end]))
 			{
-				Tokens.Add(new Token(Program.TokenMap[symbols[start..end]], symbols[start..end], LineNum, ColNum));
+				Tokens.Add(new Token(Program.TokenMap[symbols[start..end]], "", LineNum, ColNum));
 				start = end;
 				end = symbols.Length;
 			}

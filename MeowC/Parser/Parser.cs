@@ -69,8 +69,6 @@ public class Parser(CompilationUnit unit, List<Token> tokens)
 
 	internal ProcedureDefinition ParseProcedureDefinition() => Rules.Rules.ProcedureDefinition.Parse(this);
 
-	internal ObjectDefinition ParseObjectDefinition() => Rules.Rules.ObjectDefinition.Parse(this);
-
 	private bool HasRule(Priorities priority, Token token, out InfixExpressionRule? infixRule,
 		out ApplicationExpressionRule? applicationRule)
 	{

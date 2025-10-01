@@ -1,6 +1,4 @@
-﻿using MeowC.Parser.Matches;
-
-namespace MeowC.Parser.Rules;
+﻿namespace MeowC.Parser.Rules;
 
 public static class Rules
 {
@@ -11,7 +9,6 @@ public static class Rules
 	public static readonly AssignStatementRule AssignStatement = new();
 
 	public static readonly ProcedureDefinitionRule ProcedureDefinition = new();
-	public static readonly ObjectDefinitionRule ObjectDefinition = new();
 
 	public static readonly IdentifierExpressionRule IdentifierExpression = new();
 	public static readonly NumberExpressionRule NumberExpression = new();
@@ -23,7 +20,6 @@ public static class Rules
 	public static readonly CasesExpressionRule CasesExpression = new();
 
 	public static readonly RecordExpressionRule RecordExpression = new();
-	public static readonly VariantExpressionRule VariantExpression = new();
 
 	public static readonly BinaryOperatorExpressionRule PolymorphismDefinitionExpression = new(Priorities.PolymorphismFormation, false);
 	public static readonly BinaryOperatorExpressionRule FunctionDefinitionExpression = new(Priorities.FunctionFormation, false);
@@ -56,7 +52,6 @@ public static class Rules
 	public static readonly IReadOnlyDictionary<string, PrefixExpressionRule> KeywordPrefixes = new Dictionary<string, PrefixExpressionRule>()
 	{
 		{ "record", RecordExpression },
-		{ "variant", VariantExpression },
 	};
 
 	public static readonly IReadOnlyDictionary<TokenType, InfixExpressionRule> Infixes = new Dictionary<TokenType, InfixExpressionRule>

@@ -10,8 +10,8 @@ public class RecordExpressionRule : PrefixExpressionRule
 	{
 		// parser.Consume(TokenTypes.Keyword, "record");
 		parser.Consume(TokenTypes.LBrace);
-		var definitions = new List<ObjectDefinition>();
-		while (parser.Peek.Type != TokenTypes.RBrace) definitions.Add(parser.ParseObjectDefinition());
+		var definitions = new List<ProcedureDefinition>();
+		while (parser.Peek.Type != TokenTypes.RBrace) definitions.Add(parser.ParseProcedureDefinition());
 		parser.Consume(TokenTypes.RBrace);
 		return new Expression.Record(token, definitions);
 	}
