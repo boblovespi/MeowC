@@ -21,6 +21,7 @@ public static class Rules
 	public static readonly CasesExpressionRule CasesExpression = new();
 
 	public static readonly RecordExpressionRule RecordExpression = new();
+	public static readonly VariantExpressionRule VariantExpression = new();
 
 	public static readonly BinaryOperatorExpressionRule PolymorphismDefinitionExpression = new(Priorities.PolymorphismFormation, false);
 	public static readonly BinaryOperatorExpressionRule FunctionDefinitionExpression = new(Priorities.FunctionFormation, false);
