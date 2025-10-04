@@ -77,4 +77,5 @@ let applyLambda: u16 := (x |-> x + 10) 1000;
 
 let point: Type := record { x: i32; y: i32; };
 let maybe: T => Type := T |=> variant { yes: T; no: 1; };
-let maybeint: maybe i32 := (maybe i32).yes 5;
+let yes: maybe i32 := (maybe i32).yes 5;
+let maybeint: Type := maybe i32;

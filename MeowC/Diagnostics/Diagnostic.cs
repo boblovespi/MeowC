@@ -24,6 +24,7 @@ public record Diagnostic(
 		{ (DiagPhase.TypeChecker, 201), "Type mismatch" },
 		{ (DiagPhase.TypeChecker, 202), "Could not unify types" },
 		{ (DiagPhase.TypeChecker, 203), "Invalid function parameter" },
+		{ (DiagPhase.TypeChecker, 204), "Not a type" },
 		{ (DiagPhase.TypeChecker, 210), "Polymorphic constraint not satisfied" },
 		{ (DiagPhase.TypeChecker, 211), "Polymorphic binding error" },
 		{ (DiagPhase.TypeChecker, 220), "Inconsistent return types" },

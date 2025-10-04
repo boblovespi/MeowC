@@ -23,7 +23,7 @@ public class TypeChecker
 		GlobalBindings["f32"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.F32));
 		GlobalBindings["f64"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.F64));
 		GlobalBindings["proc"] = new Type.TypeIdentifier(new Type.Builtin(Builtins.Proc));
-		GlobalBindings["Type"] = Type.Types;
+		GlobalBindings["Type"] = new Type.TypeIdentifier(Type.Types);
 		GlobalBindings["inl"] = new Type.Polymorphic(
 			"T",
 			Type.Types,
@@ -53,8 +53,8 @@ public class TypeChecker
 				{
 					Type.TypeIdentifier => NormalizeTypes(type),
 					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
-					_ => throw new TokenException(0, $"Type `{type}` for definition `{definition.Id}` ought to be a type identifier",
-						definition.Val.Token)
+					_ => throw new TokenException(204, $"Type `{type}` for definition `{definition.Id}` ought to be a type identifier",
+						definition.Type.Token)
 				};
 				TypeTable[definition.Val] = GlobalBindings[definition.Id];
 			}
@@ -83,6 +83,10 @@ public class TypeChecker
 					Unit.AddDiagnostic(
 						Diagnostic.TypecheckError(Unit, 201, definition.Val.Token, $"Expected type `{expected}` but got `{actual}`"));
 					Errored = true;
+				}
+				else
+				{
+					Console.WriteLine($"{definition.Id}: {actual}");
 				}
 			}
 			catch (TokenException e)

@@ -21,6 +21,8 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Ty
 			Expression.Procedure procedure => Procedure(procedure, bindings, hint),
 			Expression.String => Type.ConstString,
 			Expression.Unit => Type.Unit,
+			Expression.Variant variant => Variant(variant, bindings, hint),
+			Expression.Record record => Record(record, bindings, hint),
 			Expression.Tuple tuple => Tuple(tuple, bindings, hint),
 			_ => throw new NotImplementedException(
 				$"We are missing type checking for expression {expression.GetType()}! {expression.Token.ErrorString}")
@@ -220,7 +222,7 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Ty
 					var actual = Evaluate(binOp.Right, newBindings, poly.To);
 					if (!(poly.To & actual))
 						throw new TokenException(201, $"Expected polymorphic type into `{poly.To}`, but got `{actual}` instead", binOp.Token);
-					return poly;
+					return new Type.Polymorphic(poly.From, poly.TypeClass, actual);
 				default:
 					throw new TokenException(201, $"Expected a polymorphic type but got `{hint}` instead", binOp.Token);
 			}
@@ -317,12 +319,39 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Ty
 		throw new NotImplementedException($"Type checking not implemented for token at {prefix.Token.ErrorString}");
 	}
 
+	private Type Record(Expression.Record record, Dictionary<IdValue, Type> bindings, Type? hint = null)
+	{
+		var names = new List<string>();
+		var types = new List<Type>();
+		foreach (var (id, expression) in record.Fields)
+		{
+			names.Add(id);
+			types.Add(TypeChecker.NormalizeTypes(Evaluate(expression, bindings)));
+		}
+		return new Type.TypeIdentifier(new Type.Record(names, types));
+	}
+
+	private Type Variant(Expression.Variant variant, Dictionary<IdValue, Type> bindings, Type? hint = null)
+	{
+		var names = new List<string>();
+		var types = new List<Type>();
+		foreach (var (id, expression) in variant.Fields)
+		{
+			names.Add(id);
+			types.Add(TypeChecker.NormalizeTypes(Evaluate(expression, bindings)));
+		}
+		return new Type.TypeIdentifier(new Type.Variant(names, types));
+	}
+
 	private Type Monomorphize(Type type, string variable, Type value) => type switch
 	{
 		Type.Function(var from, var to) => new Type.Function(Monomorphize(from, variable, value), Monomorphize(to, variable, value)),
 		Type.Polymorphic(var from, var typeClass, var to) => new Type.Polymorphic(from, Monomorphize(typeClass, variable, value), Monomorphize(to, variable, value)),
 		Type.Product(var left, var right) => new Type.Product(Monomorphize(left, variable, value), Monomorphize(right, variable, value)),
 		Type.Sum(var left, var right) => new Type.Sum(Monomorphize(left, variable, value), Monomorphize(right, variable, value)),
+		Type.Record(var names, var fields) => new Type.Record(names, fields.Select(t => Monomorphize(t, variable, value)).ToList()),
+		Type.Variant(var names, var entries) => new Type.Variant(names, entries.Select(t => Monomorphize(t, variable, value)).ToList()),
+		Type.TypeIdentifier(var type1) => new Type.TypeIdentifier(Monomorphize(type1, variable, value)),
 		Type.Variable variable1 when variable1.Name == variable => value,
 		Type.Builtin or Type.CString or Type.Enum or Type.TypeUniverse or Type.IntLiteral => type,
 		Type.Variable => type,
