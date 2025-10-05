@@ -30,6 +30,10 @@ let main: 1 := [
     print (curryAdd 1000)2000;
     print '\n';
     print fib 20;
+    print '\n';
+    print intid 1000;
+    print '\n';
+    print fac 3;
 };
 
 let double: i32 -> i32 := n |-> [] 
@@ -37,7 +41,7 @@ let double: i32 -> i32 := n |-> []
     return n * 2;
 };
 
-let error: u8 := fooooo * bar;
+// let error: u8 := fooooo * bar;
 let const: 1 -> u8 := a |-> 'h';
 
 let add: i32 * i32 -> i32 := (x, y) |-> x + y;
@@ -69,13 +73,13 @@ let divByZero: i32 := {
 let polytest: T => T -> i32 := T |=> t |-> 0;
 let id: T => T -> T := T |=> t |-> t;
 let id2: T => T -> T := T |=> t |-> (id T) (id T) t;
-let intid: i32 -> i32 := n |-> (id i32) n;
-let mistake: u8 := -1;
+let intid: i32 -> i32 := id i32;
+// let mistake: u8 := -1;
 let foo: u8 := 'a';
-let bar: i8 := "a" + "b";
+// let bar: i8 := "a" + "b";
 let applyLambda: u16 := (x |-> x + 10) 1000;
 
 let point: Type := record { x: i32; y: i32; };
 let maybe: T => Type := T |=> variant { yes: T; no: 1; };
-let yes: maybe i32 := (maybe i32).yes 5;
+// let yes: maybe i32 := (maybe i32).yes 5;
 let maybeint: Type := maybe i32;

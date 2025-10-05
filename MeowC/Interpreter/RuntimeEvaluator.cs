@@ -1,18 +1,22 @@
-﻿using MeowC.Parser.Matches;
+﻿using MeowC.Interpreter.Types;
+using MeowC.Parser.Matches;
+using Type = MeowC.Interpreter.Types.Type;
 
 namespace MeowC.Interpreter;
 
-public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
+public class RuntimeEvaluator(List<Definition> definitions, Dictionary<Expression, Type> typeTable) : IEvaluator<object>
 {
 	private List<Definition> Definitions { get; } = definitions;
+	private Dictionary<Expression, Type> TypeTable { get; } = typeTable;
 	private IEvaluator<object> Me => this;
 
 	public object Evaluate(Expression expression, Dictionary<IdValue, object> bindings, object? hint = null) =>
 		expression switch
 		{
+			// Expression.Number number when TypeTable[number] & new Type.Builtin(Builtins.U8) => (byte)number.Value,
 			Expression.Number number => number.Value,
 			Expression.String @string => @string.Value,
-			Expression.Identifier id => (IdValue)id.Name,
+			Expression.Identifier id => Me.Unbind((IdValue)id.Name, bindings),
 			Expression.Application app => Apply(app, bindings),
 			Expression.BinaryOperator binOp => BinOp(binOp, bindings),
 			Expression.Case @case => Cases(@case, bindings),
@@ -47,13 +51,21 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			{
 				case Expression.Identifier bind:
 					var bindId = (IdValue)bind.Name;
+					var type = TypeTable[binOp];
+					if (type is not Type.Function fun)
+						throw new Exception("wtf typechecking failed");
+					var lType = fun.From;
+					var rType = fun.To;
 					return new Func<object, object>(x =>
 					{
 						var newBindings = new Dictionary<IdValue, object>(bindings)
 						{
+							// [bindId] = lType == new Type.Builtin(Builtins.U8) ? Convert.ToByte(x) : lType & new Type.IntLiteral(0) ? Convert.ToInt64(x) : x
 							[bindId] = x
 						};
-						return Evaluate(binOp.Right, newBindings);
+						var o = Evaluate(binOp.Right, newBindings);
+						// return rType == new Type.Builtin(Builtins.U8) ? Convert.ToByte(o) : rType & new Type.IntLiteral(0) ? Convert.ToByte(o) : o;
+						return o;
 					});
 				case Expression.Tuple tuple:
 					return new Func<object, object>(x =>
@@ -77,6 +89,21 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			// if (left is not Expression.Identifier bind) throw new Exception("Functions require bindings");
 		}
 
+		if (binOp.Type == TokenTypes.DoubleMapsTo)
+		{
+			var left = binOp.Left;
+			switch (left)
+			{
+				case Expression.Identifier bind:
+					var bindId = (IdValue)bind.Name;
+					return new Func<object, object>(x =>
+					{
+						// Program.Info("hi lol");
+						return Evaluate(binOp.Right, bindings);
+					});
+			}
+		}
+
 		switch (binOp)
 		{
 			case var _ when binOp.Type == TokenTypes.MapsTo:
@@ -95,8 +122,14 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 		{
 			var left = Me.Unbind(Evaluate(binOp.Left, bindings), bindings);
 			var right = Me.Unbind(Evaluate(binOp.Right, bindings), bindings);
-			if (left is long ll && right is long rr) return ll - rr;
-			throw new Exception("Type mismatch");
+			return left switch
+			{
+				long ll when right is long rr => ll - rr,
+				byte lb when right is byte rc => (long)lb - rc,
+				long ll when right is byte rc2 => ll - rc2,
+				byte lb when right is long rl => lb - rl,
+				_ => throw new Exception("Type mismatch")
+			};
 		}
 
 		if (binOp.Type == TokenTypes.Plus)
@@ -113,6 +146,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			var right = Me.Unbind(Evaluate(binOp.Right, bindings), bindings);
 			return left.Equals(right);
 		}
+
 		if (binOp.Type == TokenTypes.Less)
 		{
 			var left = Me.Unbind(Evaluate(binOp.Left, bindings), bindings);
@@ -121,7 +155,7 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 			throw new Exception("Type mismatch");
 		}
 
-		throw new NotImplementedException();
+		throw new NotImplementedException(binOp.Type.ToString());
 	}
 
 	public object Apply(Expression.Application app, Dictionary<IdValue, object> bindings, object? hint = null)
@@ -157,7 +191,8 @@ public class RuntimeEvaluator(List<Definition> definitions) : IEvaluator<object>
 							value = bindings[id];
 						switch (value)
 						{
-							case long l and <= byte.MaxValue and >= byte.MinValue:
+							case long l and <= byte.MaxValue and >= byte.MinValue
+								when TypeTable[expression] & new Type.Builtin(Builtins.U8):
 								Console.Write((char)l);
 								break;
 							case long l:

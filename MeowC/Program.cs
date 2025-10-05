@@ -66,6 +66,7 @@ public static class Program
 		typer.Check();
 		if (compUnit.Errored)
 		{
+			PrintDiagnostics(compUnit);
 			Console.WriteLine("something went wrong");
 			return;
 		}
@@ -99,11 +100,12 @@ public static class Program
 		typer.Check();
 		if (compUnit.Errored)
 		{
+			PrintDiagnostics(compUnit);
 			Console.WriteLine("something went wrong");
 			return;
 		}
 
-		var interpreter = new Interpreter.Interpreter(parser.Definitions);
+		var interpreter = new Interpreter.Interpreter(parser.Definitions, typer.TypeTable);
 		interpreter.Run();
 	}
 
