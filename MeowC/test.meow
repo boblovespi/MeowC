@@ -73,7 +73,7 @@ let divByZero: i32 := {
 let polytest: T => T -> i32 := T |=> t |-> 0;
 let id: T => T -> T := T |=> t |-> t;
 let id2: T => T -> T := T |=> t |-> (id T) (id T) t;
-let intid: i32 -> i32 := id i32;
+let intid: i32 -> i32 := n |-> (id i32)n;
 // let mistake: u8 := -1;
 let foo: u8 := 'a';
 // let bar: i8 := "a" + "b";

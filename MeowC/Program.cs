@@ -1,8 +1,13 @@
 ﻿using System.Globalization;
+using System.Reflection;
 using ConsoleAppFramework;
 using MeowC.Diagnostics;
 using MeowC.Generators;
 using MeowC.Interpreter;
+using MeowC.LSP;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Server;
+using Diagnostic = MeowC.Diagnostics.Diagnostic;
 
 namespace MeowC;
 
@@ -19,12 +24,19 @@ public static class Program
 		app.Add("", Root);
 		app.Add("typecheck", Typecheck);
 		app.Add("run", Run);
+		app.Add("lsp", StartLsp);
 		app.Run(args);
 	}
 
 	public static void Bootstrap(string dir = "")
 	{
-		using (var reader = new StreamReader(dir + "tokendef"))
+		var assembly = Assembly.GetExecutingAssembly();
+		var names = assembly.GetManifestResourceNames();
+		var tkDefName = names.FirstOrDefault(n => n.EndsWith("tokendef")) ?? "";
+		var kwDefName = names.FirstOrDefault(n => n.EndsWith("keyworddef")) ?? "";
+		var tkdef = assembly.GetManifestResourceStream(tkDefName)!;
+		var kwdef = assembly.GetManifestResourceStream(kwDefName)!;
+		using (var reader = new StreamReader(dir == "" ? tkdef : File.OpenRead(dir + "tokendef")))
 		{
 			while (!reader.EndOfStream)
 			{
@@ -34,7 +46,7 @@ public static class Program
 			}
 		}
 
-		using (var reader = new StreamReader(dir + "keyworddef"))
+		using (var reader = new StreamReader(dir == "" ? kwdef : File.OpenRead(dir + "keyworddef")))
 		{
 			while (!reader.EndOfStream)
 			{
@@ -129,7 +141,31 @@ public static class Program
 		PrintDiagnostics(compUnit);
 	}
 
-	private static void PrintDiagnostics(CompilationUnit compilationUnit)
+	public static async Task StartLsp()
+	{
+		Info("Starting LSP");
+		var server = await LanguageServer.From(options =>
+		{
+			options.WithInput(Console.OpenStandardInput());
+			options.WithOutput(Console.OpenStandardOutput());
+			options.WithServerInfo(new ServerInfo
+			{
+				Name = "MeowC",
+				Version = "0.1"
+			});
+			options.WithHandler<TextHandler>();
+			/*options.WithServices(services =>
+			{
+				services.AddSingleton<TextHandler>(provider =>
+				{
+					provider.
+				});
+			});*/
+		});
+		await server.WaitForExit;
+	}
+
+	public static void PrintDiagnostics(CompilationUnit compilationUnit)
 	{
 		foreach (var diagnostic in compilationUnit.Diagnostics)
 		{
@@ -141,7 +177,7 @@ public static class Program
 		Console.Error.WriteLine($"Caught {compilationUnit.Diagnostics.Count} issue{(compilationUnit.Diagnostics.Count == 1 ? "" : "s")}");
 		Console.ResetColor();
 	}
-	
+
 	public static void Info(string message)
 	{
 		Console.ForegroundColor = ConsoleColor.White;

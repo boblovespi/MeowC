@@ -16,6 +16,9 @@
       <PackageReference Include="libLLVM" Version="20.1.2" />
       <PackageReference Include="LLVMSharp" Version="20.1.2" />
       <PackageReference Include="LLVMSharp.Interop" Version="20.1.2" />
+      <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+      <EmbeddedResource Include="keyworddef" />
+      <EmbeddedResource Include="tokendef" />
     </ItemGroup>
     <PropertyGroup>
         <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
