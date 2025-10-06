@@ -106,6 +106,27 @@ public abstract record Type
 		Variant variant => $"{{{string.Join(" + ", variant.Names.Zip(variant.Entries).Select(n => $"({n.First}: {n.Second})"))}}}",
 		object t => $"unknown {t.GetType()}!",
 	};
+	
+	public string ToStringNoVal => this switch
+	{
+		Builtin builtin => builtin.Value.ToString().ToLowerInvariant(),
+		CString => "ConstString",
+		Enum { Value: 1 } => "unit",
+		Enum { Value: 2 } => "boolean",
+		Enum @enum => $"{@enum.Value}",
+		Function function => $"{function.From} -> {function.To}",
+		IntLiteral intLiteral => $"ConstInt[{intLiteral.Value}]",
+		Polymorphic polymorphic => $"'{polymorphic.From} : {polymorphic.TypeClass} => {polymorphic.To}",
+		Product product => $"{product.Left} * {product.Right}",
+		Sum sum => $"{sum.Left} + {sum.Right}",
+		TypeIdentifier typeIdentifier => typeIdentifier.Type.ToStringNoVal,
+		TypeUniverse typeUniverse => $"Type {typeUniverse.Level}",
+		Variable variable => $"'{variable.Name} : {variable.TypeClass}",
+		Hole hole => $"Hole[{hole.Name}]",
+		Record record => $"{{{string.Join(" * ", record.Names.Zip(record.Fields).Select(n => $"({n.First}: {n.Second})"))}}}",
+		Variant variant => $"{{{string.Join(" + ", variant.Names.Zip(variant.Entries).Select(n => $"({n.First}: {n.Second})"))}}}",
+		object t => $"unknown {t.GetType()}!",
+	};
 
 	public bool IsStricterType(Type other) => (this, other) switch
 	{
