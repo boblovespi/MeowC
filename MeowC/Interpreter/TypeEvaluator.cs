@@ -228,6 +228,31 @@ public class TypeEvaluator(Dictionary<Expression, Type> typeTable, Dictionary<Ty
 			}
 		}
 
+		if (binOp.Type == TokenTypes.Period)
+		{
+			var left = Evaluate(binOp.Left, bindings);
+			if (binOp.Right is not Expression.Identifier id)
+				throw new TokenException(205, $"`{binOp.Right} is not an identifier`", binOp.Token);
+			switch (left)
+			{
+				case Type.Product product:
+					return id.Name switch
+					{
+						"left" => product.Left,
+						"right" => product.Right,
+						_ => throw new TokenException(206, $"Product `{left}` does not have branch '{id.Name}'", binOp.Token)
+					};
+				case Type.Record record:
+					return record.Names.Zip(record.Fields).FirstOrDefault(t => t.First == id.Name, (null, null)!).Second ??
+					       throw new TokenException(206, $"Record `{left}` does not have field '{id.Name}'", binOp.Token);
+				case Type.TypeIdentifier { Type: Type.Variant variant }:
+					var from = variant.Names.Zip(variant.Entries).FirstOrDefault(t => t.First == id.Name, (null, null)!).Second ??
+					              throw new TokenException(206, $"Variant `{left}` does not have constructor '{id.Name}'", binOp.Token);
+					return new Type.Function(from, left);
+			}
+			throw new TokenException(206, $"Type `{left}` does not have properties", binOp.Token);
+		}
+
 		throw new NotImplementedException($"Type checking not implemented for token at {binOp.Token.ErrorString}");
 	}
 

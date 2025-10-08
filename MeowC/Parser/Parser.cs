@@ -12,6 +12,7 @@ public class Parser(CompilationUnit unit, List<Token> tokens)
 
 	public void Parse()
 	{
+		Program.Debug($"Starting parser on {unit.FileName}\n");
 		while (Peek.Type != TokenTypes.EndOfFile)
 			try
 			{

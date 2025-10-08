@@ -49,10 +49,12 @@ public class TypeChecker
 			try
 			{
 				var type = Evaluator.Evaluate(definition.Type, new Dictionary<IdValue, Type>(GlobalBindings));
+				Program.Debug(type.ToString() ?? "");
 				GlobalBindings[definition.Id] = type switch
 				{
 					Type.TypeIdentifier => NormalizeTypes(type),
 					Type.IntLiteral { Value: <= int.MaxValue and >= 1 } intLiteral => new Type.Enum((int)intLiteral.Value),
+					_ when type == Type.Types => type,
 					_ => throw new TokenException(204, $"Type `{type}` for definition `{definition.Id}` ought to be a type identifier",
 						definition.Type.Token)
 				};
@@ -86,18 +88,15 @@ public class TypeChecker
 				}
 				else
 				{
-					Console.WriteLine($"{definition.Id}: {actual}");
+					Program.Debug($"{definition.Id}: {actual}");
+					if (ShouldUpdateTable(expected))
+						GlobalBindings[definition.Id] = actual;
 				}
 			}
 			catch (TokenException e)
 			{
 				Unit.AddDiagnostic(
 					Diagnostic.TypecheckError(Unit, e.Code, e.At, e.Message));
-				Errored = true;
-			}
-			catch (CompileException e)
-			{
-				Program.Error(e);
 				Errored = true;
 			}
 			catch (Exception e)
@@ -112,7 +111,7 @@ public class TypeChecker
 		// Unify some stuff
 		foreach (var (hole, constraints) in Constraints)
 		{
-			Console.Out.WriteLine($"{hole}: {string.Join(", ", constraints)}");
+			Program.Debug($"{hole}: {string.Join(", ", constraints)}");
 			Type? type = null;
 			foreach (var constraint in constraints)
 			{
@@ -146,6 +145,13 @@ public class TypeChecker
 
 		if (!Errored)
 			Program.Info($"Successfully typechecked {Unit.FileName}");
+	}
+
+	private bool ShouldUpdateTable(Type type)
+	{
+		if (type is Type.Polymorphic polymorphic && polymorphic.To == Type.Types)
+			return true;
+		return false;
 	}
 
 	/// <summary>

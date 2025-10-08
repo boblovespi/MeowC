@@ -25,7 +25,7 @@ public static class Rules
 
 	public static readonly BinaryOperatorExpressionRule PolymorphismDefinitionExpression = new(Priorities.PolymorphismFormation, false);
 	public static readonly BinaryOperatorExpressionRule FunctionDefinitionExpression = new(Priorities.FunctionFormation, false);
-	
+
 	public static readonly BinaryOperatorExpressionRule LeftSumOperatorExpression = new(Priorities.Sum, true);
 	public static readonly BinaryOperatorExpressionRule LeftProductOperatorExpression = new(Priorities.Product, true);
 
@@ -33,6 +33,8 @@ public static class Rules
 	public static readonly BinaryOperatorExpressionRule LessThanOperatorExpression = new(Priorities.Conditional, false);
 	public static readonly BinaryOperatorExpressionRule FunctionFormationExpression = new(Priorities.FunctionFormation, false);
 	public static readonly BinaryOperatorExpressionRule PolymorphismFormationExpression = new(Priorities.PolymorphismFormation, false);
+
+	public static readonly BinaryOperatorExpressionRule LeftDotOperatorExpression = new(Priorities.Dot, true);
 
 	public static readonly ApplicationExpressionRule ApplicationExpression = new();
 
@@ -51,7 +53,7 @@ public static class Rules
 		{ TokenTypes.LBrace, CasesExpression },
 	};
 
-	public static readonly IReadOnlyDictionary<string, PrefixExpressionRule> KeywordPrefixes = new Dictionary<string, PrefixExpressionRule>()
+	public static readonly IReadOnlyDictionary<string, PrefixExpressionRule> KeywordPrefixes = new Dictionary<string, PrefixExpressionRule>
 	{
 		{ "record", RecordExpression },
 		{ "variant", VariantExpression },
@@ -69,6 +71,7 @@ public static class Rules
 		{ TokenTypes.FuncType, FunctionDefinitionExpression },
 		{ TokenTypes.DoubleTo, PolymorphismDefinitionExpression },
 		{ TokenTypes.DoubleMapsTo, PolymorphismFormationExpression },
+		{ TokenTypes.Period, LeftDotOperatorExpression },
 	};
 
 	public static readonly IReadOnlyDictionary<string, CaseRule> CaseRules = new Dictionary<string, CaseRule>

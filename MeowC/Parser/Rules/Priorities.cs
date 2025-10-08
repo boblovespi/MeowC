@@ -13,5 +13,6 @@ public enum Priorities
 	Prefix,
 	Application,
 	Postfix,
+	Dot,
 	Const
 }

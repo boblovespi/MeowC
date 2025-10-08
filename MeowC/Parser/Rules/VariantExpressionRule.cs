@@ -12,6 +12,6 @@ public class VariantExpressionRule : PrefixExpressionRule
 		var definitions = new List<ObjectDefinition>();
 		while (parser.Peek.Type != TokenTypes.RBrace) definitions.Add(parser.ParseObjectDefinition());
 		parser.Consume(TokenTypes.RBrace);
-		return new Expression.Record(token, definitions);
+		return new Expression.Variant(token, definitions);
 	}
 }

@@ -1,0 +1,5 @@
+﻿let maybe: T => Type := T |=> variant { yes: T; no: 1; };
+let yesi32: maybe i32 := (maybe i32).yes 5;
+
+let zero: i32 := (0, 5).left;
+let bug: i32 := (0, 1).bar;

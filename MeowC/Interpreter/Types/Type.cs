@@ -98,7 +98,7 @@ public abstract record Type
 		Polymorphic polymorphic => $"'{polymorphic.From} : {polymorphic.TypeClass} => {polymorphic.To}",
 		Product product => $"{product.Left} * {product.Right}",
 		Sum sum => $"{sum.Left} + {sum.Right}",
-		TypeIdentifier typeIdentifier => $"val{typeIdentifier.Type}",
+		TypeIdentifier typeIdentifier => $"val[{typeIdentifier.Type}]",
 		TypeUniverse typeUniverse => $"Type {typeUniverse.Level}",
 		Variable variable => $"'{variable.Name} : {variable.TypeClass}",
 		Hole hole => $"Hole[{hole.Name}]",

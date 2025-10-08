@@ -15,6 +15,7 @@ public static class Program
 {
 	public static Dictionary<string, TokenType> TokenMap { get; } = new();
 	public static ISet<string> Keywords { get; } = new HashSet<string>();
+	public static bool IsDebug => true;
 
 	public static void Main(string[] args)
 	{
@@ -134,8 +135,9 @@ public static class Program
 		// foreach (var token in lexer.Tokens) Console.WriteLine(token);
 		var parser = new Parser.Parser(compUnit, lexer.Tokens);
 		parser.Parse();
-		//foreach (var def in parser.Definitions)
-		//	Console.WriteLine($"defined {def.Id} to be a type {def.Type} with value {def.Val}");
+		if (IsDebug)
+			foreach (var def in parser.Definitions)
+				Debug($"defined {def.Id} to be type:\n{def.Type}\nwith value:\n{def.Val}\n");
 		var typer = new TypeChecker(compUnit, parser.Definitions);
 		typer.Check();
 		PrintDiagnostics(compUnit);
@@ -182,6 +184,15 @@ public static class Program
 	{
 		Console.ForegroundColor = ConsoleColor.White;
 		Console.Error.WriteLine($"Info: {message}");
+		Console.ResetColor();
+	}
+	
+	public static void Debug(string message)
+	{
+		if (!IsDebug)
+			return;
+		Console.ForegroundColor = ConsoleColor.Cyan;
+		Console.Error.WriteLine($"Debug: {message}");
 		Console.ResetColor();
 	}
 

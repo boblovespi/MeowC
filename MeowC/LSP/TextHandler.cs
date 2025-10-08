@@ -28,6 +28,12 @@ public class TextHandler(ILanguageServerFacade server) : TextDocumentSyncHandler
 
 	public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
 	{
+		var uri = request.TextDocument.Uri;
+
+		compUnitBuffer[uri] = CompilationUnit.TestFromCode(request.TextDocument.Text);
+
+		var compUnit = compUnitBuffer[uri];
+		ParseAndTypecheck(compUnit, uri);
 		return Unit.Task;
 	}
 
@@ -134,6 +140,7 @@ public class TextHandler(ILanguageServerFacade server) : TextDocumentSyncHandler
 				if (expr == null)
 					continue;
 			}
+
 			expression = expr;
 			break;
 		}
@@ -177,7 +184,7 @@ public class TextHandler(ILanguageServerFacade server) : TextDocumentSyncHandler
 				if (binaryOperator.Token.Line == line && binaryOperator.Token.Col >= col)
 					return expression;
 				return GetExpressionForPos(line, col, binaryOperator.Right);
-			
+
 			case Expression.Case @case:
 				if (@case.Token.Line == line && @case.Token.Col >= col)
 					return expression;
@@ -200,14 +207,43 @@ public class TextHandler(ILanguageServerFacade server) : TextDocumentSyncHandler
 						default:
 							throw new ArgumentOutOfRangeException(nameof(caseCase));
 					}
+
 				return null;
-			
+
 			case Expression.Prefix prefix:
 				if (prefix.Token.Line == line && prefix.Token.Col >= col)
 					return expression;
 				return GetExpressionForPos(line, col, prefix.Expression);
 			case Expression.Procedure procedure:
-				break;
+				if (procedure.Token.Line == line && procedure.Token.Col >= col)
+					return expression;
+				foreach (var procedureDefinition in procedure.Definitions)
+				{
+					var typeExpr = GetExpressionForPos(line, col, procedureDefinition.Type);
+					if (typeExpr != null)
+						return typeExpr;
+					if (procedureDefinition.Val != null)
+					{
+						var valExpr = GetExpressionForPos(line, col, procedureDefinition.Val);
+						if (valExpr != null)
+							return valExpr;
+					}
+				}
+
+				foreach (var statement in procedure.Statements)
+				{
+					var statementExpr = GetExpressionForPos(line, col, statement switch
+					{
+						Statement.Assignment assignment => assignment.Value,
+						Statement.Callable callable => callable.Argument,
+						Statement.Return @return => @return.Argument,
+					});
+					if (statementExpr != null)
+						return statementExpr;
+				}
+
+				return null;
+
 			case Expression.Identifier identifier when identifier.Token.Line == line && identifier.Token.Col >= col:
 			case Expression.Number number when number.Token.Line == line && number.Token.Col >= col:
 			case Expression.String s when s.Token.Line == line && s.Token.Col >= col:
@@ -215,7 +251,17 @@ public class TextHandler(ILanguageServerFacade server) : TextDocumentSyncHandler
 				return expression;
 
 			case Expression.Tuple tuple:
-				break;
+				if (tuple.Token.Line == line && tuple.Token.Col >= col)
+					return expression;
+				foreach (var value in tuple.Values)
+				{
+					var valueExpr = GetExpressionForPos(line, col, value);
+					if (valueExpr != null)
+						return valueExpr;
+				}
+
+				return null;
+
 			case Expression.Record record:
 				break;
 			case Expression.Variant variant:
